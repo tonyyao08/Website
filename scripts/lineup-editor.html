@@ -6,7 +6,7 @@
   main { display:grid; grid-template-columns:minmax(28rem, 1.2fr) minmax(24rem, .8fr); gap:2rem; }
   .map { position:relative; aspect-ratio:1; background:#111; } .map img { width:100%; height:100%; object-fit:contain; }
   .marker { position:absolute; width:.9rem; height:.9rem; transform:translate(-50%,-50%); border-radius:50%; padding:0; cursor:pointer; }
-  .start { border:1px solid #facc15; background:#facc15; } .end { border:2px solid #60a5fa; background:transparent; } .draft { box-shadow:0 0 0 .2rem #fff,0 0 .45rem .25rem #60a5fa; }
+  .start { border:1px solid #facc15; background:#facc15; } .end { border:1px solid #60a5fa; background:#60a5fa; } .draft { box-shadow:0 0 0 .2rem #fff,0 0 .45rem .25rem #60a5fa; }
   form { display:grid; gap:.8rem; } label { display:grid; gap:.3rem; font-weight:650; } input, select, textarea, button { font:inherit; } input, select, textarea { padding:.55rem; background:#162235; border:1px solid #43546d; color:inherit; } textarea { min-height:4rem; }
   .choices, .images { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; } .selection { padding:1rem; background:#162235; } .status { min-height:1.5rem; color:#9fd3ff; } button { padding:.6rem .9rem; cursor:pointer; } .save { background:#0f4c81; color:#fff; border:1px solid #42a5f5; font-weight:700; } .image-preview { display:none; width:100%; max-width:12rem; max-height:7rem; margin-top:.45rem; object-fit:cover; border:1px solid #43546d; } .image-preview.visible { display:block; }
   @media (max-width: 52rem) { main { grid-template-columns:1fr; } .choices, .images { grid-template-columns:1fr; } }
