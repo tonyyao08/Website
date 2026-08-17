@@ -143,21 +143,25 @@ const serializedLineups = lineups.map((lineup) => ({
         const end = locationById(lineup.endLocationId);
         if (!start || !end) return;
 
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', start.position.x);
-        line.setAttribute('y1', start.position.y);
-        line.setAttribute('x2', end.position.x);
-        line.setAttribute('y2', end.position.y);
-        line.classList.add('lineup-path');
-        line.setAttribute('tabindex', '0');
-        line.setAttribute('role', 'button');
-        line.setAttribute('aria-label', `Open ${lineup.title}`);
+        const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        const visibleLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        [hitArea, visibleLine].forEach((line) => {
+          line.setAttribute('x1', start.position.x);
+          line.setAttribute('y1', start.position.y);
+          line.setAttribute('x2', end.position.x);
+          line.setAttribute('y2', end.position.y);
+        });
+        hitArea.classList.add('lineup-path-hit');
+        hitArea.setAttribute('tabindex', '0');
+        hitArea.setAttribute('role', 'button');
+        hitArea.setAttribute('aria-label', `Open ${lineup.title}`);
+        visibleLine.classList.add('lineup-path');
         const open = () => showDetails(lineup);
-        line.addEventListener('click', open);
-        line.addEventListener('keydown', (event) => {
+        hitArea.addEventListener('click', open);
+        hitArea.addEventListener('keydown', (event) => {
           if (event.key === 'Enter' || event.key === ' ') open();
         });
-        lineLayer.append(line);
+        lineLayer.append(hitArea, visibleLine);
       });
   }
 
@@ -220,10 +224,12 @@ const serializedLineups = lineups.map((lineup) => ({
   .lineup-map { position: relative; width: min(100%, 52rem); aspect-ratio: 1; background: #111; overflow: hidden; }
   .lineup-map > img, #line-layer, #location-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
   .lineup-map > img { object-fit: contain; }
-  :global(.lineup-path) { pointer-events: stroke; stroke: #39d98a; stroke-width: 2.25; vector-effect: non-scaling-stroke; cursor: pointer; }
-  :global(.lineup-path:focus) { stroke: #facc15; outline: none; }
+  :global(.lineup-path) { pointer-events: none; stroke: #39d98a; stroke-width: 2.25; vector-effect: non-scaling-stroke; }
+  :global(.lineup-path-hit) { pointer-events: stroke; stroke: transparent; stroke-width: 16; vector-effect: non-scaling-stroke; cursor: pointer; }
+  :global(.lineup-path-hit:focus) { outline: none; }
+  :global(.lineup-path-hit:focus + .lineup-path) { stroke: #facc15; }
   #location-layer { pointer-events: none; }
-  :global(.map-location) { position: absolute; width: 2.5rem; height: 2.5rem; transform: translate(-50%, -50%); border: 0; padding: 0; background: transparent; font: 900 2rem/1 system-ui, sans-serif; cursor: pointer; pointer-events: auto; text-shadow: 0 1px 3px #000; }
+  :global(.map-location) { position: absolute; width: 2.5rem; height: 2.5rem; transform: translate(-50%, -50%); border: 0; padding: 0; background: transparent; font: 400 2rem/1 system-ui, sans-serif; cursor: pointer; pointer-events: auto; text-shadow: 0 1px 3px #000; }
   :global(.map-location.start) { color: #facc15; }
   :global(.map-location.end) { color: #ef4444; }
   :global(.map-location.selected) { text-shadow: 0 0 0.45rem #fff, 0 1px 3px #000; }
