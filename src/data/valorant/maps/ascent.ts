@@ -21,6 +21,12 @@ const ascent: ValorantMap = {
       position: { x: 36.62109375, y: 24.4140625 },
       callout: 'Site',
     },
+    {
+      id: 'b-stairs',
+      label: "B stairs",
+      type: 'end',
+      position: { x: 32.716, y: 20.7115 },
+    },
   ],
 };
 
