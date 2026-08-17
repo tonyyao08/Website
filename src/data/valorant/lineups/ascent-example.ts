@@ -7,7 +7,7 @@ const ascentExample: Lineup = {
   id: 'ascent-attack-recon-b-main-to-b-site',
   title: 'B Main to B Site recon',
   mapId: 'ascent',
-  side: 'all',
+  side: 'attack',
   utility: 'recon-dart',
   startLocationId: 'b-main',
   endLocationId: 'b-site',
