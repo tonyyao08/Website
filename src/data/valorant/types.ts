@@ -45,7 +45,7 @@ export interface Lineup {
   /** The actual standing location; usually matches the start location. */
   stand: {
     description: string;
-    position: MapPosition;
+    position?: MapPosition;
   };
   aim: {
     description: string;
