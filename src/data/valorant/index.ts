@@ -1,5 +1,5 @@
 import ascent from './maps/ascent';
-import type { Lineup, LineupFilters, MapId, MapMarker, ValorantMap } from './types';
+import type { Lineup, LineupFilters, MapId, MapLocation, ValorantMap } from './types';
 
 const lineupModules = import.meta.glob<{ default: Lineup }>('./lineups/*.ts', {
   eager: true,
@@ -24,25 +24,25 @@ export function getLineups(filters: LineupFilters = {}): Lineup[] {
  * The future map UI calls this after a user selects one marker. It returns only
  * the connections that touch that marker, which is exactly the line-visibility rule.
  */
-export function getLineupsForMarker(
+export function getLineupsForLocation(
   mapId: MapId,
-  markerId: string,
+  locationId: string,
   filters: Omit<LineupFilters, 'mapId'> = {},
 ): Lineup[] {
   return getLineups({ ...filters, mapId }).filter(
-    (lineup) => lineup.startMarkerId === markerId || lineup.endMarkerId === markerId,
+    (lineup) => lineup.startLocationId === locationId || lineup.endLocationId === locationId,
   );
 }
 
-export function getOppositeMarker(lineup: Lineup, selectedMarkerId: string): MapMarker | undefined {
+export function getOppositeLocation(lineup: Lineup, selectedLocationId: string): MapLocation | undefined {
   const map = getMap(lineup.mapId);
   if (!map) return undefined;
 
-  const oppositeId = lineup.startMarkerId === selectedMarkerId
-    ? lineup.endMarkerId
-    : lineup.startMarkerId;
+  const oppositeId = lineup.startLocationId === selectedLocationId
+    ? lineup.endLocationId
+    : lineup.startLocationId;
 
-  return map.markers.find((marker) => marker.id === oppositeId);
+  return map.locations.find((location) => location.id === oppositeId);
 }
 
-export type { Lineup, LineupFilters, MapId, MapMarker, MapPosition, TeamSide, Utility, ValorantMap } from './types';
+export type { Lineup, LineupFilters, MapId, MapLocation, MapPosition, TeamSide, Utility, ValorantMap } from './types';

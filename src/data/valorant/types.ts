@@ -1,7 +1,6 @@
 export type MapId = 'ascent';
 export type TeamSide = 'attack' | 'defense';
 export type Utility = 'recon-dart' | 'shock-dart';
-export type MarkerKind = 'start' | 'end';
 
 /** Coordinates are percentages of the map image: (0, 0) is its top-left corner. */
 export interface MapPosition {
@@ -9,10 +8,10 @@ export interface MapPosition {
   y: number;
 }
 
-export interface MapMarker {
+/** A reusable, named point on a map. Many lineups may refer to the same location. */
+export interface MapLocation {
   id: string;
   label: string;
-  kind: MarkerKind;
   position: MapPosition;
   callout?: string;
 }
@@ -22,7 +21,7 @@ export interface ValorantMap {
   name: string;
   /** Add a top-down map image here when assets are licensed and ready. */
   image: string | null;
-  markers: MapMarker[];
+  locations: MapLocation[];
 }
 
 export interface LineupMedia {
@@ -38,10 +37,10 @@ export interface Lineup {
   mapId: MapId;
   side: TeamSide;
   utility: Utility;
-  /** Marker IDs on the map. These two fields define the selectable map line. */
-  startMarkerId: string;
-  endMarkerId: string;
-  /** The actual standing location; usually matches the start marker. */
+  /** Reusable location IDs on the map. Together, they define the selectable map line. */
+  startLocationId: string;
+  endLocationId: string;
+  /** The actual standing location; usually matches the start location. */
   stand: {
     description: string;
     position: MapPosition;

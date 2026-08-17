@@ -7,10 +7,10 @@ Copy `ascent-example.ts`, rename it to a descriptive slug, and replace all templ
 ## Required concepts
 
 - `mapId`, `side`, and `utility` power the map/attack-or-defense/recon-or-shock filters.
-- `startMarkerId` and `endMarkerId` must match marker IDs in `src/data/valorant/maps/<map>.ts`.
-- Map-marker positions use percentages, so they remain correct as the map image resizes.
+- `startLocationId` and `endLocationId` must match reusable location IDs in `src/data/valorant/maps/<map>.ts`.
+- Map-location positions use percentages, so they remain correct as the map image resizes.
 - A map line is not stored separately. The UI draws it from a lineup's start and end marker.
-- After selecting a marker, call `getLineupsForMarker()`. Only those returned lineup lines should render.
+- After selecting a location, call `getLineupsForLocation()`. Only those returned lineup lines should render.
 - After clicking a line, render `stand`, `aim`, `mechanics`, `notes`, `result`, and optional `media`.
 
 ## Adding a new map

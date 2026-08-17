@@ -1,10 +1,193 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getLineups, getMap } from '../../data/valorant';
+
+const base = import.meta.env.BASE_URL;
+const root = base.endsWith('/') ? base : `${base}/`;
+const map = getMap('ascent');
+const lineups = getLineups({ mapId: 'ascent' });
+
+if (!map) throw new Error('Ascent map data is missing.');
+
+const mapImage = `${root}${map.image}`;
+const mediaUrl = (path: string | undefined) => (path ? `${root}${path}` : undefined);
+
+const serializedLineups = lineups.map((lineup) => ({
+  ...lineup,
+  media: lineup.media && {
+    standImage: mediaUrl(lineup.media.standImage),
+    aimImage: mediaUrl(lineup.media.aimImage),
+    resultImage: mediaUrl(lineup.media.resultImage),
+    videoUrl: lineup.media.videoUrl,
+  },
+}));
 ---
 
 <BaseLayout title="Valorant Lineups | Tony Yao">
   <h1>Valorant lineups</h1>
-  <p class="intro">
-    The data foundation is ready. Map controls and visual lineup routes are the next layer.
-  </p>
+  <p class="intro">Select a map point, then choose one of its available lineup paths.</p>
+
+  <section class="filters" aria-label="Lineup filters">
+    <label>
+      Map
+      <select id="map-filter">
+        <option value="ascent">Ascent</option>
+      </select>
+    </label>
+    <label>
+      Side
+      <select id="side-filter">
+        <option value="all">Attack and defense</option>
+        <option value="attack">Attack</option>
+        <option value="defense">Defense</option>
+      </select>
+    </label>
+    <label>
+      Dart
+      <select id="utility-filter">
+        <option value="all">Recon and shock</option>
+        <option value="recon-dart">Recon dart</option>
+        <option value="shock-dart">Shock dart</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="lineup-map" aria-label="Ascent lineup map">
+    <img src={mapImage} alt="Ascent minimap" />
+    <svg id="line-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Available lineup paths"></svg>
+    <div id="location-layer"></div>
+  </section>
+
+  <p id="map-instructions" class="map-instructions">Choose B Main or B Site to reveal connected routes.</p>
+  <section id="lineup-details" class="lineup-details" hidden aria-live="polite"></section>
 </BaseLayout>
+
+<script is:inline define:vars={{ map, lineups: serializedLineups }}>
+  const sideFilter = document.querySelector('#side-filter');
+  const utilityFilter = document.querySelector('#utility-filter');
+  const locationLayer = document.querySelector('#location-layer');
+  const lineLayer = document.querySelector('#line-layer');
+  const details = document.querySelector('#lineup-details');
+  const instructions = document.querySelector('#map-instructions');
+  let selectedLocationId = null;
+
+  const filteredLineups = () => lineups.filter((lineup) =>
+    (sideFilter.value === 'all' || lineup.side === sideFilter.value) &&
+    (utilityFilter.value === 'all' || lineup.utility === utilityFilter.value),
+  );
+
+  const locationById = (id) => map.locations.find((location) => location.id === id);
+
+  function showDetails(lineup) {
+    details.hidden = false;
+    details.innerHTML = `
+      <h2>${lineup.title}</h2>
+      <dl>
+        <div><dt>Stand</dt><dd>${lineup.stand.description}</dd></div>
+        <div><dt>Aim</dt><dd>${lineup.aim.description}</dd></div>
+        <div><dt>Mechanics</dt><dd>${lineup.mechanics.bounces} bounce · ${lineup.mechanics.customChargeNote ?? lineup.mechanics.charge} · ${lineup.mechanics.movement}</dd></div>
+        <div><dt>Result</dt><dd>${lineup.result}</dd></div>
+      </dl>
+      <h3>Notes</h3>
+      <ul>${lineup.notes.map((note) => `<li>${note}</li>`).join('')}</ul>
+      <div class="reference-images">
+        ${lineup.media?.standImage ? `<figure><img src="${lineup.media.standImage}" alt="Where to stand" /><figcaption>Where to stand</figcaption></figure>` : ''}
+        ${lineup.media?.aimImage ? `<figure><img src="${lineup.media.aimImage}" alt="Where to aim" /><figcaption>Where to aim</figcaption></figure>` : ''}
+        ${lineup.media?.resultImage ? `<figure><img src="${lineup.media.resultImage}" alt="Lineup result" /><figcaption>Result</figcaption></figure>` : ''}
+      </div>`;
+  }
+
+  function render() {
+    const available = filteredLineups();
+    locationLayer.innerHTML = '';
+    lineLayer.innerHTML = '';
+
+    map.locations.forEach((location) => {
+      const isConnected = available.some((lineup) =>
+        lineup.startLocationId === location.id || lineup.endLocationId === location.id,
+      );
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `map-location${selectedLocationId === location.id ? ' selected' : ''}`;
+      button.style.left = `${location.position.x}%`;
+      button.style.top = `${location.position.y}%`;
+      button.textContent = location.label;
+      button.disabled = !isConnected;
+      button.setAttribute('aria-pressed', String(selectedLocationId === location.id));
+      button.addEventListener('click', () => {
+        selectedLocationId = location.id;
+        details.hidden = true;
+        instructions.textContent = `Routes connected to ${location.label}. Click a line for instructions.`;
+        render();
+      });
+      locationLayer.append(button);
+    });
+
+    if (!selectedLocationId) return;
+
+    available
+      .filter((lineup) => lineup.startLocationId === selectedLocationId || lineup.endLocationId === selectedLocationId)
+      .forEach((lineup) => {
+        const start = locationById(lineup.startLocationId);
+        const end = locationById(lineup.endLocationId);
+        if (!start || !end) return;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', start.position.x);
+        line.setAttribute('y1', start.position.y);
+        line.setAttribute('x2', end.position.x);
+        line.setAttribute('y2', end.position.y);
+        line.classList.add('lineup-path');
+        line.setAttribute('tabindex', '0');
+        line.setAttribute('role', 'button');
+        line.setAttribute('aria-label', `Open ${lineup.title}`);
+        const open = () => showDetails(lineup);
+        line.addEventListener('click', open);
+        line.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') open();
+        });
+        lineLayer.append(line);
+      });
+  }
+
+  sideFilter.addEventListener('change', () => {
+    selectedLocationId = null;
+    details.hidden = true;
+    instructions.textContent = 'Choose B Main or B Site to reveal connected routes.';
+    render();
+  });
+  utilityFilter.addEventListener('change', () => {
+    selectedLocationId = null;
+    details.hidden = true;
+    instructions.textContent = 'Choose B Main or B Site to reveal connected routes.';
+    render();
+  });
+
+  render();
+</script>
+
+<style>
+  .filters { display: flex; flex-wrap: wrap; gap: 1rem; margin: 2rem 0; }
+  label { display: grid; gap: 0.35rem; font-weight: 600; }
+  select { min-width: 11rem; padding: 0.45rem; font: inherit; }
+  .lineup-map { position: relative; width: min(100%, 48rem); aspect-ratio: 1; background: #111; overflow: hidden; }
+  .lineup-map > img, #line-layer, #location-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .lineup-map > img { object-fit: contain; }
+  #line-layer { pointer-events: none; }
+  .lineup-path { pointer-events: stroke; stroke: #39d98a; stroke-width: 2.25; vector-effect: non-scaling-stroke; cursor: pointer; }
+  .lineup-path:focus { stroke: #facc15; outline: none; }
+  .map-location { position: absolute; transform: translate(-50%, -50%); border: 2px solid #fff; border-radius: 999px; padding: 0.35rem 0.55rem; color: #fff; background: #155e75; font: inherit; font-weight: 700; cursor: pointer; }
+  .map-location.selected { background: #0f766e; box-shadow: 0 0 0 4px #99f6e4; }
+  .map-location:disabled { opacity: 0.45; cursor: not-allowed; }
+  .map-instructions { font-weight: 600; }
+  .lineup-details { margin-top: 2rem; padding: 1.5rem; background: #eef6ff; border-left: 4px solid #0f4c81; }
+  .lineup-details h2 { margin-top: 0; }
+  dl div { display: grid; grid-template-columns: 8rem 1fr; gap: 1rem; margin: 0.7rem 0; }
+  dt { font-weight: 700; }
+  dd { margin: 0; }
+  .reference-images { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+  figure { margin: 0; }
+  figure img { width: 100%; display: block; }
+  figcaption { margin-top: 0.4rem; font-weight: 600; }
+  @media (max-width: 38rem) { dl div { grid-template-columns: 1fr; gap: 0.2rem; } }
+</style>

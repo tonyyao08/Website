@@ -3,33 +3,21 @@ import type { ValorantMap } from '../types';
 const ascent: ValorantMap = {
   id: 'ascent',
   name: 'Ascent',
-  image: null,
-  markers: [
+  image: 'images/valorant/ascent/minimap.png',
+  locations: [
     {
-      id: 'attacker-a-main',
-      label: 'A Main',
-      kind: 'start',
-      position: { x: 20, y: 72 },
+      id: 'b-main',
+      label: 'B Main',
+      // Placeholder location — adjust once we calibrate map coordinates in the final UI.
+      position: { x: 73, y: 57 },
       callout: 'Attacker side',
     },
     {
-      id: 'a-site',
-      label: 'A Site',
-      kind: 'end',
-      position: { x: 42, y: 65 },
-    },
-    {
-      id: 'defender-a-site',
-      label: 'A Site',
-      kind: 'start',
-      position: { x: 42, y: 65 },
-      callout: 'Defender side',
-    },
-    {
-      id: 'a-main',
-      label: 'A Main',
-      kind: 'end',
-      position: { x: 20, y: 72 },
+      id: 'b-site',
+      label: 'B Site',
+      // Placeholder location — adjust once we calibrate map coordinates in the final UI.
+      position: { x: 77, y: 39 },
+      callout: 'Site',
     },
   ],
 };

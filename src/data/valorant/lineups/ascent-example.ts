@@ -1,31 +1,36 @@
 import type { Lineup } from '../types';
 
 /**
- * Data-shape example only. Replace its instructions with a tested lineup before
- * marking it verified or presenting it as playable content.
+ * First proof-of-concept lineup. Keep verified false until it has been tested.
  */
 const ascentExample: Lineup = {
-  id: 'ascent-attack-recon-a-main-to-a-site-example',
-  title: 'Example: A Main to A Site recon',
+  id: 'ascent-attack-recon-b-main-to-b-site',
+  title: 'B Main to B Site recon',
   mapId: 'ascent',
   side: 'attack',
   utility: 'recon-dart',
-  startMarkerId: 'attacker-a-main',
-  endMarkerId: 'a-site',
+  startLocationId: 'b-main',
+  endLocationId: 'b-site',
   stand: {
-    description: 'Stand at the designated A Main start marker.',
-    position: { x: 20, y: 72 },
+    description: 'Stand at the B Main start location.',
+    position: { x: 73, y: 57 },
   },
   aim: {
-    description: 'Replace with the precise in-game aim reference.',
+    description: 'Align in the middle of the line in the island image.',
   },
   mechanics: {
-    bounces: 0,
-    charge: 'full',
+    bounces: 1,
+    charge: 'custom',
+    customChargeNote: '3 charge',
     movement: 'standing',
   },
-  notes: ['Template entry — verify every instruction in a custom game.'],
-  result: 'Replace with the intended scan/result description.',
+  notes: ['Align in the middle of the line in the island image.'],
+  result: 'Recon lands on B Site.',
+  media: {
+    standImage: 'images/valorant/ascent/lineups/recon-b-main-to-b-site/stand.png',
+    aimImage: 'images/valorant/ascent/lineups/recon-b-main-to-b-site/aim.png',
+    resultImage: 'images/valorant/ascent/lineups/recon-b-main-to-b-site/result.png',
+  },
   verified: false,
 };
 

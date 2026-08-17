@@ -1,10 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 const base = import.meta.env.BASE_URL;
+const root = base.endsWith('/') ? base : `${base}/`;
 ---
 
 <BaseLayout title="Tools | Tony Yao">
   <h1>Tools</h1>
   <p class="intro">Small utilities and interactive projects.</p>
-  <p><a href={`${base}tools/valorant-lineups/`}>Valorant lineup tool (coming soon)</a></p>
+  <p><a href={`${root}tools/valorant-lineups/`}>Valorant lineup tool (coming soon)</a></p>
 </BaseLayout>
