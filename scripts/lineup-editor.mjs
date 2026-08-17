@@ -45,7 +45,7 @@ function addNewLocations(source, locations) {
 async function saveImage(image, mapId, folder, name) {
   if (!image?.data) return undefined;
   const extension = ['.png', '.jpg', '.jpeg', '.webp'].includes(extname(image.name || '').toLowerCase()) ? extname(image.name).toLowerCase() : '.png';
-  const relative = `images/valorant/${mapId}/lineups/${folder}/${name}${extension}`;
+  const relative = `images/valorant/${mapId}/lineups/${folder}/${name}-${folder}${extension}`;
   await writeFile(resolve(root, 'public', relative), Buffer.from(image.data, 'base64'));
   return relative;
 }

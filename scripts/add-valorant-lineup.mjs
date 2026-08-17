@@ -72,7 +72,7 @@ async function copyImage(source, destinationFolder, name) {
   const input = resolve(source);
   if (!await fileExists(input)) throw new Error(`Image not found: ${input}`);
   const extension = extname(input).toLowerCase() || '.png';
-  const output = resolve(destinationFolder, `${name}${extension}`);
+  const output = resolve(destinationFolder, `${name}-${destinationFolder.split(/[\\/]/).at(-1)}${extension}`);
   await copyFile(input, output);
   return output.slice(resolve(root, 'public').length + 1).replaceAll('\\', '/');
 }

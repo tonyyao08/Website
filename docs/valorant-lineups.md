@@ -10,7 +10,7 @@ For a visual workflow, use `npm run lineup:editor` and open `http://127.0.0.1:43
 2. From the repository folder, run `npm run add:lineup`.
 3. Answer the prompts. You can paste a Windows path from Explorer when asked for each image.
 4. For each endpoint, choose an existing location ID or enter `new`. For a new location, provide its label and X/Y map positions as percentages from 0 to 100. The helper adds it to the map data automatically.
-5. The helper gives the lineup a unique ID, writes its data file, and copies images into `public/images/valorant/<map>/lineups/<unique-id>/` as `stand`, `aim`, and `result` while keeping their file extension.
+5. The helper gives the lineup a unique ID, writes its data file, and copies images into `public/images/valorant/<map>/lineups/<unique-id>/`. Each file is automatically named with its purpose and unique ID, such as `stand-ascent-attack-recon-b-main-to-b-site.png`.
 6. Run `npm run build`, check the page locally with `npm run dev`, and test the lineup in-game. Set `verified: true` in the generated lineup file only after testing it.
 
 To convert pixel coordinates from a square 2048 × 2048 map image to percentages: `percentage = pixels / 2048 * 100`. For example, X 460 becomes 22.4609375 and Y 1080 becomes 52.734375.
