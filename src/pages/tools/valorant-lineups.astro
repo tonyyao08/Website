@@ -58,6 +58,11 @@ const serializedLineups = lineups.map((lineup) => ({
       <p>Select a map point, then click a lineup path to view its instructions.</p>
     </aside>
   </section>
+  <dialog id="image-preview" class="image-preview">
+    <button id="close-image-preview" class="close-preview" type="button" aria-label="Close enlarged image">×</button>
+    <img id="preview-image" alt="" />
+    <p id="preview-caption"></p>
+  </dialog>
 </BaseLayout>
 
 <script is:inline define:vars={{ map, lineups: serializedLineups }}>
@@ -65,6 +70,9 @@ const serializedLineups = lineups.map((lineup) => ({
   const lineLayer = document.querySelector('#line-layer');
   const details = document.querySelector('#lineup-details');
   const instructions = document.querySelector('#map-instructions');
+  const imagePreview = document.querySelector('#image-preview');
+  const previewImage = document.querySelector('#preview-image');
+  const previewCaption = document.querySelector('#preview-caption');
   let selectedLocationId = null;
   let selectedSide = 'attack';
   let selectedUtility = 'recon-dart';
@@ -88,9 +96,9 @@ const serializedLineups = lineups.map((lineup) => ({
       <h3>Notes</h3>
       <ul>${lineup.notes.map((note) => `<li>${note}</li>`).join('')}</ul>
       <div class="reference-images">
-        ${lineup.media?.standImage ? `<figure><img src="${lineup.media.standImage}" alt="Where to stand" /><figcaption>Where to stand</figcaption></figure>` : ''}
-        ${lineup.media?.aimImage ? `<figure><img src="${lineup.media.aimImage}" alt="Where to aim" /><figcaption>Where to aim</figcaption></figure>` : ''}
-        ${lineup.media?.resultImage ? `<figure><img src="${lineup.media.resultImage}" alt="Lineup result" /><figcaption>Result</figcaption></figure>` : ''}
+        ${lineup.media?.standImage ? `<figure><button class="image-thumbnail" type="button" data-image-src="${lineup.media.standImage}" data-image-caption="Where to stand"><img src="${lineup.media.standImage}" alt="Where to stand" /></button><figcaption>Where to stand</figcaption></figure>` : ''}
+        ${lineup.media?.aimImage ? `<figure><button class="image-thumbnail" type="button" data-image-src="${lineup.media.aimImage}" data-image-caption="Where to aim"><img src="${lineup.media.aimImage}" alt="Where to aim" /></button><figcaption>Where to aim</figcaption></figure>` : ''}
+        ${lineup.media?.resultImage ? `<figure><button class="image-thumbnail" type="button" data-image-src="${lineup.media.resultImage}" data-image-caption="Result"><img src="${lineup.media.resultImage}" alt="Lineup result" /></button><figcaption>Result</figcaption></figure>` : ''}
       </div>`;
   }
 
@@ -186,6 +194,20 @@ const serializedLineups = lineups.map((lineup) => ({
     });
   });
 
+  details.addEventListener('click', (event) => {
+    const thumbnail = event.target.closest('.image-thumbnail');
+    if (!thumbnail) return;
+    previewImage.src = thumbnail.dataset.imageSrc;
+    previewImage.alt = thumbnail.dataset.imageCaption;
+    previewCaption.textContent = thumbnail.dataset.imageCaption;
+    imagePreview.showModal();
+  });
+
+  document.querySelector('#close-image-preview').addEventListener('click', () => imagePreview.close());
+  imagePreview.addEventListener('click', (event) => {
+    if (event.target === imagePreview) imagePreview.close();
+  });
+
   render();
 </script>
 
@@ -195,9 +217,9 @@ const serializedLineups = lineups.map((lineup) => ({
   .filter-label { width: 4rem; color: #58657a; font-weight: 700; }
   .filter-button { min-width: 7rem; border: 1px solid #b8c4d5; border-radius: 999px; padding: 0.55rem 1rem; background: #fff; font: inherit; font-weight: 700; }
   .filter-button.active { border-color: #0f4c81; background: #0f4c81; color: #fff; }
-  .lineup-workspace { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); gap: 1.5rem; align-items: start; }
+  .lineup-workspace { display: grid; grid-template-columns: minmax(32rem, 1.35fr) minmax(25rem, 0.9fr); gap: 2rem; align-items: start; }
   .map-panel { min-width: 0; }
-  .lineup-map { position: relative; width: min(100%, 40rem); aspect-ratio: 1; background: #111; overflow: hidden; }
+  .lineup-map { position: relative; width: min(100%, 52rem); aspect-ratio: 1; background: #111; overflow: hidden; }
   .lineup-map > img, #line-layer, #location-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
   .lineup-map > img { object-fit: contain; }
   :global(.lineup-path) { pointer-events: stroke; stroke: #39d98a; stroke-width: 2.25; vector-effect: non-scaling-stroke; cursor: pointer; }
@@ -208,19 +230,25 @@ const serializedLineups = lineups.map((lineup) => ({
   :global(.map-location.end) { color: #ef4444; }
   :global(.map-location.selected) { text-shadow: 0 0 0.45rem #fff, 0 1px 3px #000; }
   .map-instructions { font-weight: 600; }
-  .lineup-details { max-height: min(40rem, calc(100vh - 15rem)); overflow: auto; padding: 1.5rem; background: #eef6ff; border-left: 4px solid #0f4c81; }
+  .lineup-details { min-height: 18rem; padding: 1.5rem; background: #eef6ff; border-left: 4px solid #0f4c81; }
   .lineup-details h2 { margin-top: 0; }
   dl div { display: grid; grid-template-columns: 8rem 1fr; gap: 1rem; margin: 0.7rem 0; }
   dt { font-weight: 700; }
   dd { margin: 0; }
-  .reference-images { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+  .reference-images { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
   figure { margin: 0; }
-  figure img { width: 100%; display: block; }
+  .image-thumbnail { display: block; width: 100%; padding: 0; border: 2px solid transparent; background: transparent; cursor: zoom-in; }
+  .image-thumbnail:hover, .image-thumbnail:focus-visible { border-color: #0f4c81; }
+  figure img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
   figcaption { margin-top: 0.4rem; font-weight: 600; }
+  .image-preview { width: min(90vw, 72rem); max-height: 90vh; padding: 1rem; border: 0; background: #101827; color: #fff; }
+  .image-preview::backdrop { background: rgb(15 23 42 / 80%); }
+  .image-preview img { display: block; width: auto; max-width: 100%; max-height: calc(90vh - 5rem); margin: 0 auto; }
+  .image-preview p { margin: 0.6rem 0 0; text-align: center; font-weight: 700; }
+  .close-preview { position: absolute; top: 0.25rem; right: 0.5rem; border: 0; background: transparent; color: #fff; font-size: 2rem; line-height: 1; cursor: pointer; }
   @media (max-width: 48rem) {
     .lineup-workspace { grid-template-columns: 1fr; }
     .lineup-map { width: 100%; }
-    .lineup-details { max-height: none; }
     dl div { grid-template-columns: 1fr; gap: 0.2rem; }
   }
 </style>
