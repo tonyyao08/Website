@@ -88,7 +88,10 @@ const serializedLineups = lineups.map((lineup) => ({
     const thumbnail = (source, caption) => source
       ? `<button class="image-thumbnail" type="button" data-image-src="${source}" data-image-caption="${caption}"><img src="${source}" alt="${caption}" /></button>`
       : '';
-    const mechanics = `<span class="mechanics-icons" aria-label="${lineup.mechanics.bounces} bounce, ${lineup.mechanics.customChargeNote ?? lineup.mechanics.charge} charge"><span title="${lineup.mechanics.bounces} bounce">◆◇</span><span title="${lineup.mechanics.customChargeNote ?? lineup.mechanics.charge} charge">■■□</span></span>`;
+    const mechanics = `<div class="mechanics-icons" aria-label="${lineup.mechanics.bounces} bounce, ${lineup.mechanics.customChargeNote ?? lineup.mechanics.charge} charge">
+      <span class="mechanic"><span class="mechanics-label">Bounce</span><span class="token-row"><i class="token diamond filled"></i><i class="token diamond"></i></span></span>
+      <span class="mechanic"><span class="mechanics-label">Charge</span><span class="token-row"><i class="token square filled"></i><i class="token square filled"></i><i class="token square"></i></span></span>
+    </div>`;
     details.innerHTML = `
       <h2>${lineup.title}</h2>
       <dl>
@@ -241,8 +244,14 @@ const serializedLineups = lineups.map((lineup) => ({
   :global(#lineup-details dt) { font-weight: 700; }
   :global(#lineup-details dd) { display: flex; align-items: center; gap: 0.75rem; min-width: 0; margin: 0; }
   :global(#lineup-details .mechanics-row) { display: block; margin: 1rem 0; }
-  :global(.mechanics-icons) { display: flex; gap: 1rem; color: #facc15; font-size: 1.4rem; letter-spacing: 0.12em; }
-  :global(.mechanics-icons span:last-child) { color: #7cc4ff; }
+  :global(.mechanics-icons) { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; }
+  :global(.mechanic) { display: inline-flex; align-items: center; gap: 0.55rem; }
+  :global(.mechanics-label) { color: #c8d5e6; font-weight: 700; }
+  :global(.token-row) { display: inline-flex; align-items: center; gap: 0.4rem; }
+  :global(.token) { display: inline-block; width: 0.75rem; height: 0.75rem; border: 2px solid currentColor; }
+  :global(.token.diamond) { color: #facc15; transform: rotate(45deg); }
+  :global(.token.square) { color: #7cc4ff; }
+  :global(.token.filled) { background: currentColor; }
   :global(.image-thumbnail) { flex: 0 0 18rem; width: 18rem; padding: 0; border: 2px solid transparent; background: transparent; cursor: zoom-in; }
   :global(.image-thumbnail:hover), :global(.image-thumbnail:focus-visible) { border-color: #0f4c81; }
   :global(.image-thumbnail img) { display: block; width: 100%; height: 13.5rem; object-fit: cover; }
