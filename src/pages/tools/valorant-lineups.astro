@@ -88,12 +88,13 @@ const serializedLineups = lineups.map((lineup) => ({
     const thumbnail = (source, caption) => source
       ? `<button class="image-thumbnail" type="button" data-image-src="${source}" data-image-caption="${caption}"><img src="${source}" alt="${caption}" /></button>`
       : '';
+    const mechanics = `<span class="mechanics-icons" aria-label="${lineup.mechanics.bounces} bounce, ${lineup.mechanics.customChargeNote ?? lineup.mechanics.charge} charge"><span title="${lineup.mechanics.bounces} bounce">◆◇</span><span title="${lineup.mechanics.customChargeNote ?? lineup.mechanics.charge} charge">■■□</span></span>`;
     details.innerHTML = `
       <h2>${lineup.title}</h2>
       <dl>
         <div><dt>Stand</dt><dd><span>${lineup.stand.description}</span>${thumbnail(lineup.media?.standImage, 'Where to stand')}</dd></div>
         <div><dt>Aim</dt><dd><span>${lineup.aim.description}</span>${thumbnail(lineup.media?.aimImage, 'Where to aim')}</dd></div>
-        <div><dt>Mechanics</dt><dd>${lineup.mechanics.bounces} bounce · ${lineup.mechanics.customChargeNote ?? lineup.mechanics.charge} · ${lineup.mechanics.movement}</dd></div>
+        <div class="mechanics-row"><dd>${mechanics}</dd></div>
         <div><dt>Result</dt><dd><span>${lineup.result}</span>${thumbnail(lineup.media?.resultImage, 'Result')}</dd></div>
       </dl>
       <h3>Notes</h3>
@@ -216,9 +217,9 @@ const serializedLineups = lineups.map((lineup) => ({
 <style>
   .filters { display: grid; gap: 0.8rem; margin: 2rem 0; }
   .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
-  .filter-label { width: 4rem; color: #58657a; font-weight: 700; }
-  .filter-button { min-width: 7rem; border: 1px solid #b8c4d5; border-radius: 999px; padding: 0.55rem 1rem; background: #fff; font: inherit; font-weight: 700; }
-  .filter-button.active { border-color: #0f4c81; background: #0f4c81; color: #fff; }
+  .filter-label { width: 4rem; color: #9caec4; font-weight: 700; }
+  .filter-button { min-width: 7rem; border: 1px solid #43546d; border-radius: 999px; padding: 0.55rem 1rem; background: #162235; color: #e5edf7; font: inherit; font-weight: 700; }
+  .filter-button.active { border-color: #42a5f5; background: #0f4c81; color: #fff; }
   .lineup-workspace { display: grid; grid-template-columns: minmax(32rem, 1.35fr) minmax(25rem, 0.9fr); gap: 2rem; align-items: start; }
   .map-panel { min-width: 0; }
   .lineup-map { position: relative; width: min(100%, 52rem); aspect-ratio: 1; background: #111; overflow: hidden; }
@@ -234,11 +235,14 @@ const serializedLineups = lineups.map((lineup) => ({
   :global(.map-location.end) { color: #ef4444; }
   :global(.map-location.selected) { text-shadow: 0 0 0.45rem #fff, 0 1px 3px #000; }
   .map-instructions { font-weight: 600; }
-  .lineup-details { min-height: 18rem; padding: 1.5rem; background: #eef6ff; border-left: 4px solid #0f4c81; }
+  .lineup-details { min-height: 18rem; padding: 1.5rem; background: #162235; border-left: 4px solid #42a5f5; }
   :global(#lineup-details h2) { margin-top: 0; }
   :global(#lineup-details dl div) { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1rem; margin: 0.8rem 0; }
   :global(#lineup-details dt) { font-weight: 700; }
   :global(#lineup-details dd) { display: flex; align-items: center; gap: 0.75rem; min-width: 0; margin: 0; }
+  :global(#lineup-details .mechanics-row) { display: block; margin: 1rem 0; }
+  :global(.mechanics-icons) { display: flex; gap: 1rem; color: #facc15; font-size: 1.4rem; letter-spacing: 0.12em; }
+  :global(.mechanics-icons span:last-child) { color: #7cc4ff; }
   :global(.image-thumbnail) { flex: 0 0 18rem; width: 18rem; padding: 0; border: 2px solid transparent; background: transparent; cursor: zoom-in; }
   :global(.image-thumbnail:hover), :global(.image-thumbnail:focus-visible) { border-color: #0f4c81; }
   :global(.image-thumbnail img) { display: block; width: 100%; height: 13.5rem; object-fit: cover; }

@@ -1,15 +1,15 @@
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  color: #1d2433;
-  background: #f8fafc;
+  color: #e5edf7;
+  background: #0b1220;
 }
 
 * { box-sizing: border-box; }
 
-body { margin: 0; line-height: 1.6; }
+body { margin: 0; line-height: 1.6; background: #0b1220; }
 
-a { color: #0f4c81; }
+a { color: #7cc4ff; }
 
 .site-header,
 .site-footer,
@@ -24,7 +24,7 @@ main {
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 0;
-  border-bottom: 1px solid #d7dee8;
+  border-bottom: 1px solid #26364d;
 }
 
 .brand { color: inherit; font-weight: 700; text-decoration: none; }
@@ -37,7 +37,7 @@ h1 { font-size: clamp(2.25rem, 7vw, 4.5rem); line-height: 1.05; letter-spacing: 
 
 .intro { max-width: 42rem; font-size: 1.2rem; }
 
-.site-footer { padding: 1.5rem 0 2rem; color: #58657a; border-top: 1px solid #d7dee8; }
+.site-footer { padding: 1.5rem 0 2rem; color: #9caec4; border-top: 1px solid #26364d; }
 
 @media (max-width: 38rem) {
   .site-header { align-items: flex-start; flex-direction: column; }
