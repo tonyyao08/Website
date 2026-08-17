@@ -99,13 +99,15 @@ const serializedLineups = lineups.map((lineup) => ({
       const isConnected = available.some((lineup) =>
         lineup.startLocationId === location.id || lineup.endLocationId === location.id,
       );
+      // Locations with no filtered lineup should not appear on the map at all.
+      if (!isConnected) return;
+
       const button = document.createElement('button');
       button.type = 'button';
       button.className = `map-location ${location.type}${selectedLocationId === location.id ? ' selected' : ''}`;
       button.style.left = `${location.position.x}%`;
       button.style.top = `${location.position.y}%`;
       button.textContent = location.type === 'start' ? 'O' : 'X';
-      button.disabled = !isConnected;
       button.title = `${location.label} (${location.type} position)`;
       button.setAttribute('aria-label', `${location.label} ${location.type} position`);
       button.setAttribute('aria-pressed', String(selectedLocationId === location.id));
@@ -188,14 +190,13 @@ const serializedLineups = lineups.map((lineup) => ({
   .lineup-map { position: relative; width: min(100%, 48rem); aspect-ratio: 1; background: #111; overflow: hidden; }
   .lineup-map > img, #line-layer, #location-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
   .lineup-map > img { object-fit: contain; }
-  :global(#line-layer) { pointer-events: none; }
   :global(.lineup-path) { pointer-events: stroke; stroke: #39d98a; stroke-width: 2.25; vector-effect: non-scaling-stroke; cursor: pointer; }
   :global(.lineup-path:focus) { stroke: #facc15; outline: none; }
-  :global(.map-location) { position: absolute; width: 2.5rem; height: 2.5rem; transform: translate(-50%, -50%); border: 0; padding: 0; background: transparent; font: 900 2rem/1 system-ui, sans-serif; cursor: pointer; text-shadow: 0 1px 3px #000; }
+  #location-layer { pointer-events: none; }
+  :global(.map-location) { position: absolute; width: 2.5rem; height: 2.5rem; transform: translate(-50%, -50%); border: 0; padding: 0; background: transparent; font: 900 2rem/1 system-ui, sans-serif; cursor: pointer; pointer-events: auto; text-shadow: 0 1px 3px #000; }
   :global(.map-location.start) { color: #facc15; }
   :global(.map-location.end) { color: #ef4444; }
   :global(.map-location.selected) { text-shadow: 0 0 0.45rem #fff, 0 1px 3px #000; }
-  :global(.map-location:disabled) { opacity: 0.45; cursor: not-allowed; }
   .map-instructions { font-weight: 600; }
   .lineup-details { margin-top: 2rem; padding: 1.5rem; background: #eef6ff; border-left: 4px solid #0f4c81; }
   .lineup-details h2 { margin-top: 0; }
