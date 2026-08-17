@@ -8,7 +8,8 @@
     "start": "astro dev",
     "check": "astro check",
     "build": "npm run check && astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "add:lineup": "node scripts/add-valorant-lineup.mjs"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
