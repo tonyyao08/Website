@@ -4,7 +4,7 @@ Each lineup is one TypeScript file in `src/data/valorant/lineups/`. The site aut
 
 ## Recommended: add a lineup with the helper
 
-For a visual workflow, use `npm run lineup:editor` and open `http://127.0.0.1:4322`. The editor displays the minimap and all existing locations. Select Start or End, then click a matching marker to reuse it; clicking open map space creates a named new location. Complete the form, attach local images, and select **Create lineup**. It writes the lineup data, copies the images, and adds any new locations locally. Stop the editor with `Ctrl+C` after saving.
+For a visual workflow, use `npm run lineup:editor` and open `http://127.0.0.1:4322`. The editor's Map dropdown automatically lists every map data file in `src/data/valorant/maps/`. It displays the selected map's minimap and all existing locations. Select Start or End, then click a matching marker to reuse it; clicking open map space creates a named new location. Complete the form, attach local images, and select **Create lineup**. It writes the lineup data, copies the images, and adds any new locations locally. Stop the editor with `Ctrl+C` after saving.
 
 1. Put the stand, aim, and result screenshots anywhere on your computer. They can stay in Downloads; the script copies them into the site.
 2. From the repository folder, run `npm run add:lineup`.
