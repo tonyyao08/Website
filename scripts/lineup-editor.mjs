@@ -10,7 +10,7 @@ const editorHtml = await readFile(resolve(root, 'scripts/lineup-editor.html'));
 const slugify = (value) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 function locationsFrom(source) {
-  return [...source.matchAll(/\{\s*id: '([^']+)',\s*label: '([^']+)',\s*type: '(start|end)',\s*(?:\/\/[^\n]*\n\s*)?position: \{ x: ([\d.]+), y: ([\d.]+) \}/g)]
+  return [...source.matchAll(/\{\s*id:\s*['\"]([^'\"]+)['\"],\s*label:\s*['\"]([^'\"]+)['\"],\s*type:\s*['\"](start|end)['\"],\s*(?:\/\/[^\n]*\n\s*)?position:\s*\{ x: ([\d.]+), y: ([\d.]+) \}/g)]
     .map(([, id, label, type, x, y]) => ({ id, label, type, position: { x: Number(x), y: Number(y) } }));
 }
 
