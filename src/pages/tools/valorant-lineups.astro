@@ -52,7 +52,6 @@ const serializedLineups = lineups.map((lineup) => ({
         <svg id="line-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Available lineup paths"></svg>
         <div id="location-layer"></div>
       </section>
-      <p id="map-instructions" class="map-instructions">Choose B Main or B Site to reveal connected routes.</p>
     </div>
     <aside id="lineup-details" class="lineup-details" aria-live="polite">
       <p>Select a map point, then click a lineup path to view its instructions.</p>
@@ -69,7 +68,6 @@ const serializedLineups = lineups.map((lineup) => ({
   const locationLayer = document.querySelector('#location-layer');
   const lineLayer = document.querySelector('#line-layer');
   const details = document.querySelector('#lineup-details');
-  const instructions = document.querySelector('#map-instructions');
   const imagePreview = document.querySelector('#image-preview');
   const previewImage = document.querySelector('#preview-image');
   const previewCaption = document.querySelector('#preview-caption');
@@ -132,7 +130,6 @@ const serializedLineups = lineups.map((lineup) => ({
       button.addEventListener('click', () => {
         selectedLocationId = location.id;
         showPlaceholder('Click a highlighted lineup path to view its instructions.');
-        instructions.textContent = `Routes connected to ${location.label}. Click a line for instructions.`;
         render();
       });
       locationLayer.append(button);
@@ -172,7 +169,6 @@ const serializedLineups = lineups.map((lineup) => ({
   function resetSelection() {
     selectedLocationId = null;
     showPlaceholder();
-    instructions.textContent = 'Choose B Main or B Site to reveal connected routes.';
     render();
   }
 
@@ -237,7 +233,6 @@ const serializedLineups = lineups.map((lineup) => ({
   :global(.map-location.start) { color: #facc15; }
   :global(.map-location.end) { color: #ef4444; }
   :global(.map-location.selected) { text-shadow: 0 0 0.45rem #fff, 0 1px 3px #000; }
-  .map-instructions { font-weight: 600; }
   .lineup-details { min-height: 18rem; padding: 1.5rem; background: #162235; border-left: 4px solid #42a5f5; }
   :global(#lineup-details h2) { margin-top: 0; }
   :global(#lineup-details dl div) { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1rem; margin: 0.8rem 0; }
