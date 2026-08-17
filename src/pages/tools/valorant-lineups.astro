@@ -85,21 +85,19 @@ const serializedLineups = lineups.map((lineup) => ({
   const locationById = (id) => map.locations.find((location) => location.id === id);
 
   function showDetails(lineup) {
+    const thumbnail = (source, caption) => source
+      ? `<button class="image-thumbnail" type="button" data-image-src="${source}" data-image-caption="${caption}"><img src="${source}" alt="${caption}" /></button>`
+      : '';
     details.innerHTML = `
       <h2>${lineup.title}</h2>
       <dl>
-        <div><dt>Stand</dt><dd>${lineup.stand.description}</dd></div>
-        <div><dt>Aim</dt><dd>${lineup.aim.description}</dd></div>
+        <div><dt>Stand</dt><dd><span>${lineup.stand.description}</span>${thumbnail(lineup.media?.standImage, 'Where to stand')}</dd></div>
+        <div><dt>Aim</dt><dd><span>${lineup.aim.description}</span>${thumbnail(lineup.media?.aimImage, 'Where to aim')}</dd></div>
         <div><dt>Mechanics</dt><dd>${lineup.mechanics.bounces} bounce · ${lineup.mechanics.customChargeNote ?? lineup.mechanics.charge} · ${lineup.mechanics.movement}</dd></div>
-        <div><dt>Result</dt><dd>${lineup.result}</dd></div>
+        <div><dt>Result</dt><dd><span>${lineup.result}</span>${thumbnail(lineup.media?.resultImage, 'Result')}</dd></div>
       </dl>
       <h3>Notes</h3>
-      <ul>${lineup.notes.map((note) => `<li>${note}</li>`).join('')}</ul>
-      <div class="reference-images">
-        ${lineup.media?.standImage ? `<figure><button class="image-thumbnail" type="button" data-image-src="${lineup.media.standImage}" data-image-caption="Where to stand"><img src="${lineup.media.standImage}" alt="Where to stand" /></button><figcaption>Where to stand</figcaption></figure>` : ''}
-        ${lineup.media?.aimImage ? `<figure><button class="image-thumbnail" type="button" data-image-src="${lineup.media.aimImage}" data-image-caption="Where to aim"><img src="${lineup.media.aimImage}" alt="Where to aim" /></button><figcaption>Where to aim</figcaption></figure>` : ''}
-        ${lineup.media?.resultImage ? `<figure><button class="image-thumbnail" type="button" data-image-src="${lineup.media.resultImage}" data-image-caption="Result"><img src="${lineup.media.resultImage}" alt="Lineup result" /></button><figcaption>Result</figcaption></figure>` : ''}
-      </div>`;
+      <ul>${lineup.notes.map((note) => `<li>${note}</li>`).join('')}</ul>`;
   }
 
   function showPlaceholder(message = 'Select a map point, then click a lineup path to view its instructions.') {
@@ -232,15 +230,12 @@ const serializedLineups = lineups.map((lineup) => ({
   .map-instructions { font-weight: 600; }
   .lineup-details { min-height: 18rem; padding: 1.5rem; background: #eef6ff; border-left: 4px solid #0f4c81; }
   .lineup-details h2 { margin-top: 0; }
-  dl div { display: grid; grid-template-columns: 8rem 1fr; gap: 1rem; margin: 0.7rem 0; }
+  dl div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1rem; margin: 0.8rem 0; }
   dt { font-weight: 700; }
-  dd { margin: 0; }
-  .reference-images { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
-  figure { margin: 0; }
-  .image-thumbnail { display: block; width: 100%; padding: 0; border: 2px solid transparent; background: transparent; cursor: zoom-in; }
+  dd { display: flex; align-items: center; gap: 0.75rem; min-width: 0; margin: 0; }
+  .image-thumbnail { flex: 0 0 6rem; width: 6rem; padding: 0; border: 2px solid transparent; background: transparent; cursor: zoom-in; }
   .image-thumbnail:hover, .image-thumbnail:focus-visible { border-color: #0f4c81; }
-  figure img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
-  figcaption { margin-top: 0.4rem; font-weight: 600; }
+  .image-thumbnail img { display: block; width: 100%; height: 4.5rem; object-fit: cover; }
   .image-preview { width: min(90vw, 72rem); max-height: 90vh; padding: 1rem; border: 0; background: #101827; color: #fff; }
   .image-preview::backdrop { background: rgb(15 23 42 / 80%); }
   .image-preview img { display: block; width: auto; max-width: 100%; max-height: calc(90vh - 5rem); margin: 0 auto; }
