@@ -21,7 +21,7 @@
   <form id="editor">
     <label>Title<input name="title" required placeholder="B Main to B Site recon"></label>
     <div class="choices"><label>Side<select name="side"><option value="attack">Attack</option><option value="defense">Defense</option><option value="all">All</option></select></label><label>Dart<select name="utility"><option value="recon-dart">Recon</option><option value="shock-dart">Shock</option></select></label></div>
-    <label>Where to stand<textarea name="stand" required></textarea></label><label>Where to aim<textarea name="aim" required></textarea></label><label>Result<textarea name="result" required></textarea></label><label>Notes<textarea name="notes"></textarea></label>
+    <label>Where to stand<textarea name="stand"></textarea></label><label>Where to aim<textarea name="aim"></textarea></label><label>Result<textarea name="result"></textarea></label><label>Notes<textarea name="notes"></textarea></label>
     <div class="choices"><label>Bounces<input name="bounces" type="number" min="0" value="0" required></label><label>Charge description<input name="charge" value="3 charge"></label></div>
     <div class="images"><label>Stand image<input name="standImage" type="file" accept="image/*"></label><label>Aim image<input name="aimImage" type="file" accept="image/*"></label><label>Result image<input name="resultImage" type="file" accept="image/*"></label></div>
     <button class="save" type="submit">Create lineup</button><div class="status" id="status" role="status"></div>

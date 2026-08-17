@@ -37,7 +37,7 @@ async function uniqueId(base) {
 function addNewLocations(source, locations) {
   if (!locations.length) return source;
   const records = locations.map((location) => `    {\n      id: '${location.id}',\n      label: ${JSON.stringify(location.label)},\n      type: '${location.type}',\n      position: { x: ${location.position.x}, y: ${location.position.y} },\n    },`).join('\n');
-  const updated = source.replace(/\n  \],\n};\s*$/, `\n${records}\n  ],\n};`);
+  const updated = source.replace(/\r?\n  \],\r?\n};/, `\n${records}\n  ],\n};`);
   if (updated === source) throw new Error('Could not insert the new map location.');
   return updated;
 }
@@ -54,7 +54,7 @@ async function saveLineup(payload) {
   const { mapId = 'ascent', title, side, utility, stand, aim, result, notes = '', bounces = 0, charge = '3 charge', start, end, images = {} } = payload;
   const safeMapId = mapIdFrom(mapId);
   const mapFile = mapFileFor(safeMapId);
-  if (!title || !stand || !aim || !result || !['attack', 'defense', 'all'].includes(side) || !['recon-dart', 'shock-dart'].includes(utility)) throw new Error('Complete the required lineup fields.');
+  if (!title || !['attack', 'defense', 'all'].includes(side) || !['recon-dart', 'shock-dart'].includes(utility)) throw new Error('Complete the title, side, and utility fields.');
   if (!start?.id || !end?.id || !Number.isInteger(Number(bounces)) || Number(bounces) < 0) throw new Error('Choose both locations and a valid bounce count.');
   const currentSource = await readFile(mapFile, 'utf8');
   const existing = locationsFrom(currentSource);
