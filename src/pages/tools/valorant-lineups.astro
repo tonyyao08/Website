@@ -45,14 +45,19 @@ const serializedLineups = lineups.map((lineup) => ({
     </div>
   </section>
 
-  <section class="lineup-map" aria-label="Ascent lineup map">
-    <img src={mapImage} alt="Ascent minimap" />
-    <svg id="line-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Available lineup paths"></svg>
-    <div id="location-layer"></div>
+  <section class="lineup-workspace" aria-label="Lineup workspace">
+    <div class="map-panel">
+      <section class="lineup-map" aria-label="Ascent lineup map">
+        <img src={mapImage} alt="Ascent minimap" />
+        <svg id="line-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Available lineup paths"></svg>
+        <div id="location-layer"></div>
+      </section>
+      <p id="map-instructions" class="map-instructions">Choose B Main or B Site to reveal connected routes.</p>
+    </div>
+    <aside id="lineup-details" class="lineup-details" aria-live="polite">
+      <p>Select a map point, then click a lineup path to view its instructions.</p>
+    </aside>
   </section>
-
-  <p id="map-instructions" class="map-instructions">Choose B Main or B Site to reveal connected routes.</p>
-  <section id="lineup-details" class="lineup-details" hidden aria-live="polite"></section>
 </BaseLayout>
 
 <script is:inline define:vars={{ map, lineups: serializedLineups }}>
@@ -72,7 +77,6 @@ const serializedLineups = lineups.map((lineup) => ({
   const locationById = (id) => map.locations.find((location) => location.id === id);
 
   function showDetails(lineup) {
-    details.hidden = false;
     details.innerHTML = `
       <h2>${lineup.title}</h2>
       <dl>
@@ -88,6 +92,10 @@ const serializedLineups = lineups.map((lineup) => ({
         ${lineup.media?.aimImage ? `<figure><img src="${lineup.media.aimImage}" alt="Where to aim" /><figcaption>Where to aim</figcaption></figure>` : ''}
         ${lineup.media?.resultImage ? `<figure><img src="${lineup.media.resultImage}" alt="Lineup result" /><figcaption>Result</figcaption></figure>` : ''}
       </div>`;
+  }
+
+  function showPlaceholder(message = 'Select a map point, then click a lineup path to view its instructions.') {
+    details.innerHTML = `<p>${message}</p>`;
   }
 
   function render() {
@@ -113,7 +121,7 @@ const serializedLineups = lineups.map((lineup) => ({
       button.setAttribute('aria-pressed', String(selectedLocationId === location.id));
       button.addEventListener('click', () => {
         selectedLocationId = location.id;
-        details.hidden = true;
+        showPlaceholder('Click a highlighted lineup path to view its instructions.');
         instructions.textContent = `Routes connected to ${location.label}. Click a line for instructions.`;
         render();
       });
@@ -149,7 +157,7 @@ const serializedLineups = lineups.map((lineup) => ({
 
   function resetSelection() {
     selectedLocationId = null;
-    details.hidden = true;
+    showPlaceholder();
     instructions.textContent = 'Choose B Main or B Site to reveal connected routes.';
     render();
   }
@@ -187,7 +195,9 @@ const serializedLineups = lineups.map((lineup) => ({
   .filter-label { width: 4rem; color: #58657a; font-weight: 700; }
   .filter-button { min-width: 7rem; border: 1px solid #b8c4d5; border-radius: 999px; padding: 0.55rem 1rem; background: #fff; font: inherit; font-weight: 700; }
   .filter-button.active { border-color: #0f4c81; background: #0f4c81; color: #fff; }
-  .lineup-map { position: relative; width: min(100%, 48rem); aspect-ratio: 1; background: #111; overflow: hidden; }
+  .lineup-workspace { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); gap: 1.5rem; align-items: start; }
+  .map-panel { min-width: 0; }
+  .lineup-map { position: relative; width: min(100%, 40rem); aspect-ratio: 1; background: #111; overflow: hidden; }
   .lineup-map > img, #line-layer, #location-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
   .lineup-map > img { object-fit: contain; }
   :global(.lineup-path) { pointer-events: stroke; stroke: #39d98a; stroke-width: 2.25; vector-effect: non-scaling-stroke; cursor: pointer; }
@@ -198,7 +208,7 @@ const serializedLineups = lineups.map((lineup) => ({
   :global(.map-location.end) { color: #ef4444; }
   :global(.map-location.selected) { text-shadow: 0 0 0.45rem #fff, 0 1px 3px #000; }
   .map-instructions { font-weight: 600; }
-  .lineup-details { margin-top: 2rem; padding: 1.5rem; background: #eef6ff; border-left: 4px solid #0f4c81; }
+  .lineup-details { max-height: min(40rem, calc(100vh - 15rem)); overflow: auto; padding: 1.5rem; background: #eef6ff; border-left: 4px solid #0f4c81; }
   .lineup-details h2 { margin-top: 0; }
   dl div { display: grid; grid-template-columns: 8rem 1fr; gap: 1rem; margin: 0.7rem 0; }
   dt { font-weight: 700; }
@@ -207,5 +217,10 @@ const serializedLineups = lineups.map((lineup) => ({
   figure { margin: 0; }
   figure img { width: 100%; display: block; }
   figcaption { margin-top: 0.4rem; font-weight: 600; }
-  @media (max-width: 38rem) { dl div { grid-template-columns: 1fr; gap: 0.2rem; } }
+  @media (max-width: 48rem) {
+    .lineup-workspace { grid-template-columns: 1fr; }
+    .lineup-map { width: 100%; }
+    .lineup-details { max-height: none; }
+    dl div { grid-template-columns: 1fr; gap: 0.2rem; }
+  }
 </style>
