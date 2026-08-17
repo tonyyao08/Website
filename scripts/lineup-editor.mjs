@@ -5,6 +5,7 @@ import { extname, resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
 const lineupsDirectory = resolve(root, 'src/data/valorant/lineups');
 const mapsDirectory = resolve(root, 'src/data/valorant/maps');
+const publicDirectory = resolve(root, 'public');
 const editorHtml = await readFile(resolve(root, 'scripts/lineup-editor.html'));
 const slugify = (value) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -34,6 +35,24 @@ async function uniqueId(base) {
   return id;
 }
 
+const value = (source, key) => source.match(new RegExp(`${key}:\\s*['\"]([^'\"]*)['\"]`))?.[1] ?? '';
+function parseLineup(source, file) {
+  const object = {
+    id: value(source, 'id'), title: value(source, 'title'), mapId: value(source, 'mapId'), side: value(source, 'side'), utility: value(source, 'utility'),
+    startLocationId: value(source, 'startLocationId'), endLocationId: value(source, 'endLocationId'), file,
+    stand: source.match(/stand:\s*\{\s*description:\s*['\"]([^'\"]*)['\"]/s)?.[1] ?? '',
+    aim: source.match(/aim:\s*\{\s*description:\s*['\"]([^'\"]*)['\"]/s)?.[1] ?? '',
+    result: value(source, 'result'), notes: source.match(/notes:\s*\[\s*['\"]([^'\"]*)/s)?.[1] ?? '', bounces: Number(source.match(/bounces:\s*(\d+)/)?.[1] ?? 0), charge: value(source, 'customChargeNote') || '3 charge',
+    media: { standImage: value(source, 'standImage'), aimImage: value(source, 'aimImage'), resultImage: value(source, 'resultImage') },
+  };
+  return object.id && object.mapId ? object : null;
+}
+async function existingLineups(mapId) {
+  const files = (await readdir(lineupsDirectory)).filter((file) => file.endsWith('.ts'));
+  const lineups = (await Promise.all(files.map(async (file) => parseLineup(await readFile(resolve(lineupsDirectory, file), 'utf8'), file)))).filter(Boolean);
+  return lineups.filter((lineup) => lineup.mapId === mapId);
+}
+
 function addNewLocations(source, locations) {
   if (!locations.length) return source;
   const records = locations.map((location) => `    {\n      id: '${location.id}',\n      label: ${JSON.stringify(location.label)},\n      type: '${location.type}',\n      position: { x: ${location.position.x}, y: ${location.position.y} },\n    },`).join('\n');
@@ -51,7 +70,7 @@ async function saveImage(image, mapId, folder, name) {
 }
 
 async function saveLineup(payload) {
-  const { mapId = 'ascent', title, side, utility, stand, aim, result, notes = '', bounces = 0, charge = '3 charge', start, end, images = {} } = payload;
+  const { mapId = 'ascent', title, side, utility, stand, aim, result, notes = '', bounces = 0, charge = '3 charge', start, end, images = {}, existingId = '', existingMedia = {} } = payload;
   const safeMapId = mapIdFrom(mapId);
   const mapFile = mapFileFor(safeMapId);
   if (!title || !['attack', 'defense', 'all'].includes(side) || !['recon-dart', 'shock-dart'].includes(utility)) throw new Error('Complete the title, side, and utility fields.');
@@ -63,12 +82,12 @@ async function saveLineup(payload) {
     if (!location.label || !['start', 'end'].includes(location.type) || !Number.isFinite(location.position?.x) || !Number.isFinite(location.position?.y)) throw new Error('New locations need a label and valid map coordinates.');
   }
   const base = slugify(`${safeMapId}-${side}-${utility.replace('-dart', '')}-${start.id}-to-${end.id}`);
-  const id = await uniqueId(base);
+  const id = existingId || await uniqueId(base);
   const folder = id;
   await mkdir(resolve(root, `public/images/valorant/${safeMapId}/lineups`, folder), { recursive: true });
-  const standImage = await saveImage(images.stand, safeMapId, folder, 'stand');
-  const aimImage = await saveImage(images.aim, safeMapId, folder, 'aim');
-  const resultImage = await saveImage(images.result, safeMapId, folder, 'result');
+  const standImage = await saveImage(images.stand, safeMapId, folder, 'stand') || existingMedia.standImage;
+  const aimImage = await saveImage(images.aim, safeMapId, folder, 'aim') || existingMedia.aimImage;
+  const resultImage = await saveImage(images.result, safeMapId, folder, 'result') || existingMedia.resultImage;
   const media = [standImage && `    standImage: '${standImage}',`, aimImage && `    aimImage: '${aimImage}',`, resultImage && `    resultImage: '${resultImage}',`].filter(Boolean);
   const source = `import type { Lineup } from '../types';\n\nconst lineup: Lineup = {\n  id: '${id}',\n  title: ${JSON.stringify(title)},\n  mapId: 'ascent',\n  side: '${side}',\n  utility: '${utility}',\n  startLocationId: '${start.id}',\n  endLocationId: '${end.id}',\n  stand: { description: ${JSON.stringify(stand)} },\n  aim: { description: ${JSON.stringify(aim)} },\n  mechanics: { bounces: ${Number(bounces)}, charge: 'custom', customChargeNote: ${JSON.stringify(charge)} },\n  notes: ${JSON.stringify(notes ? [notes] : [])},\n  result: ${JSON.stringify(result)},${media.length ? `\n  media: {\n${media.join('\n')}\n  },` : ''}\n  verified: false,\n};\n\nexport default lineup;\n`;
   const finalSource = source.replace("mapId: 'ascent'", `mapId: '${safeMapId}'`);
@@ -84,7 +103,13 @@ const server = createServer(async (request, response) => {
     if (request.method === 'GET' && url.pathname === '/') return reply(response, 200, editorHtml, 'text/html');
     if (request.method === 'GET' && url.pathname === '/api/maps') return reply(response, 200, JSON.stringify(await availableMaps()), 'application/json');
     if (request.method === 'GET' && url.pathname === '/api/map') return reply(response, 200, JSON.stringify(await mapData(url.searchParams.get('map') || 'ascent')), 'application/json');
+    if (request.method === 'GET' && url.pathname === '/api/lineups') return reply(response, 200, JSON.stringify(await existingLineups(url.searchParams.get('map') || 'ascent')), 'application/json');
     if (request.method === 'GET' && url.pathname === '/minimap.png') return reply(response, 200, await readFile(resolve(root, `public/images/valorant/${mapIdFrom(url.searchParams.get('map') || 'ascent')}/minimap.png`)), 'image/png');
+    if (request.method === 'GET' && url.pathname.startsWith('/images/')) {
+      const file = resolve(publicDirectory, `.${url.pathname}`);
+      if (!file.startsWith(publicDirectory)) throw new Error('Invalid image path.');
+      return reply(response, 200, await readFile(file), `image/${extname(file).slice(1) || 'png'}`);
+    }
     if (request.method === 'POST' && request.url === '/api/save') {
       let raw = ''; for await (const chunk of request) { raw += chunk; if (raw.length > 25_000_000) throw new Error('Images are too large (25 MB limit).'); }
       const id = await saveLineup(JSON.parse(raw));
