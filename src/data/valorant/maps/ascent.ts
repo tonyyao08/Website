@@ -8,15 +8,17 @@ const ascent: ValorantMap = {
     {
       id: 'b-main',
       label: 'B Main',
-      // Placeholder location — adjust once we calibrate map coordinates in the final UI.
-      position: { x: 73, y: 57 },
+      type: 'start',
+      // Source image is 2048 × 2048. Coordinates supplied: 460 × 1080.
+      position: { x: 22.4609375, y: 52.734375 },
       callout: 'Attacker side',
     },
     {
       id: 'b-site',
       label: 'B Site',
-      // Placeholder location — adjust once we calibrate map coordinates in the final UI.
-      position: { x: 77, y: 39 },
+      type: 'end',
+      // Source image is 2048 × 2048. Coordinates supplied: 750 × 500.
+      position: { x: 36.62109375, y: 24.4140625 },
       callout: 'Site',
     },
   ],

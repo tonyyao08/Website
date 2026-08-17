@@ -28,28 +28,8 @@ const serializedLineups = lineups.map((lineup) => ({
   <p class="intro">Select a map point, then choose one of its available lineup paths.</p>
 
   <section class="filters" aria-label="Lineup filters">
-    <label>
-      Map
-      <select id="map-filter">
-        <option value="ascent">Ascent</option>
-      </select>
-    </label>
-    <label>
-      Side
-      <select id="side-filter">
-        <option value="all">Attack and defense</option>
-        <option value="attack">Attack</option>
-        <option value="defense">Defense</option>
-      </select>
-    </label>
-    <label>
-      Dart
-      <select id="utility-filter">
-        <option value="all">Recon and shock</option>
-        <option value="recon-dart">Recon dart</option>
-        <option value="shock-dart">Shock dart</option>
-      </select>
-    </label>
+    <button class="filter-button active" type="button" aria-pressed="true">Ascent</button>
+    <button class="filter-button active" type="button" aria-pressed="true">All</button>
   </section>
 
   <section class="lineup-map" aria-label="Ascent lineup map">
@@ -63,18 +43,13 @@ const serializedLineups = lineups.map((lineup) => ({
 </BaseLayout>
 
 <script is:inline define:vars={{ map, lineups: serializedLineups }}>
-  const sideFilter = document.querySelector('#side-filter');
-  const utilityFilter = document.querySelector('#utility-filter');
   const locationLayer = document.querySelector('#location-layer');
   const lineLayer = document.querySelector('#line-layer');
   const details = document.querySelector('#lineup-details');
   const instructions = document.querySelector('#map-instructions');
   let selectedLocationId = null;
 
-  const filteredLineups = () => lineups.filter((lineup) =>
-    (sideFilter.value === 'all' || lineup.side === sideFilter.value) &&
-    (utilityFilter.value === 'all' || lineup.utility === utilityFilter.value),
-  );
+  const filteredLineups = () => lineups;
 
   const locationById = (id) => map.locations.find((location) => location.id === id);
 
@@ -108,11 +83,13 @@ const serializedLineups = lineups.map((lineup) => ({
       );
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `map-location${selectedLocationId === location.id ? ' selected' : ''}`;
+      button.className = `map-location ${location.type}${selectedLocationId === location.id ? ' selected' : ''}`;
       button.style.left = `${location.position.x}%`;
       button.style.top = `${location.position.y}%`;
-      button.textContent = location.label;
+      button.textContent = location.type === 'start' ? 'O' : 'X';
       button.disabled = !isConnected;
+      button.title = `${location.label} (${location.type} position)`;
+      button.setAttribute('aria-label', `${location.label} ${location.type} position`);
       button.setAttribute('aria-pressed', String(selectedLocationId === location.id));
       button.addEventListener('click', () => {
         selectedLocationId = location.id;
@@ -150,34 +127,23 @@ const serializedLineups = lineups.map((lineup) => ({
       });
   }
 
-  sideFilter.addEventListener('change', () => {
-    selectedLocationId = null;
-    details.hidden = true;
-    instructions.textContent = 'Choose B Main or B Site to reveal connected routes.';
-    render();
-  });
-  utilityFilter.addEventListener('change', () => {
-    selectedLocationId = null;
-    details.hidden = true;
-    instructions.textContent = 'Choose B Main or B Site to reveal connected routes.';
-    render();
-  });
-
   render();
 </script>
 
 <style>
-  .filters { display: flex; flex-wrap: wrap; gap: 1rem; margin: 2rem 0; }
-  label { display: grid; gap: 0.35rem; font-weight: 600; }
-  select { min-width: 11rem; padding: 0.45rem; font: inherit; }
+  .filters { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 2rem 0; }
+  .filter-button { min-width: 7rem; border: 1px solid #b8c4d5; border-radius: 999px; padding: 0.55rem 1rem; background: #fff; font: inherit; font-weight: 700; }
+  .filter-button.active { border-color: #0f4c81; background: #0f4c81; color: #fff; }
   .lineup-map { position: relative; width: min(100%, 48rem); aspect-ratio: 1; background: #111; overflow: hidden; }
   .lineup-map > img, #line-layer, #location-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
   .lineup-map > img { object-fit: contain; }
   #line-layer { pointer-events: none; }
   .lineup-path { pointer-events: stroke; stroke: #39d98a; stroke-width: 2.25; vector-effect: non-scaling-stroke; cursor: pointer; }
   .lineup-path:focus { stroke: #facc15; outline: none; }
-  .map-location { position: absolute; transform: translate(-50%, -50%); border: 2px solid #fff; border-radius: 999px; padding: 0.35rem 0.55rem; color: #fff; background: #155e75; font: inherit; font-weight: 700; cursor: pointer; }
-  .map-location.selected { background: #0f766e; box-shadow: 0 0 0 4px #99f6e4; }
+  .map-location { position: absolute; width: 2.25rem; height: 2.25rem; transform: translate(-50%, -50%); border: 3px solid currentColor; border-radius: 50%; padding: 0; background: #111c; font: 900 1.35rem/1 system-ui, sans-serif; cursor: pointer; }
+  .map-location.start { color: #facc15; }
+  .map-location.end { color: #ef4444; }
+  .map-location.selected { background: #fff; box-shadow: 0 0 0 4px #fff8; }
   .map-location:disabled { opacity: 0.45; cursor: not-allowed; }
   .map-instructions { font-weight: 600; }
   .lineup-details { margin-top: 2rem; padding: 1.5rem; background: #eef6ff; border-left: 4px solid #0f4c81; }

@@ -7,13 +7,13 @@ const ascentExample: Lineup = {
   id: 'ascent-attack-recon-b-main-to-b-site',
   title: 'B Main to B Site recon',
   mapId: 'ascent',
-  side: 'attack',
+  side: 'all',
   utility: 'recon-dart',
   startLocationId: 'b-main',
   endLocationId: 'b-site',
   stand: {
     description: 'Stand at the B Main start location.',
-    position: { x: 73, y: 57 },
+    position: { x: 22.4609375, y: 52.734375 },
   },
   aim: {
     description: 'Align in the middle of the line in the island image.',

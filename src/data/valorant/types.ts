@@ -1,5 +1,6 @@
 export type MapId = 'ascent';
-export type TeamSide = 'attack' | 'defense';
+export type TeamSide = 'all' | 'attack' | 'defense';
+export type LocationType = 'start' | 'end';
 export type Utility = 'recon-dart' | 'shock-dart';
 
 /** Coordinates are percentages of the map image: (0, 0) is its top-left corner. */
@@ -12,6 +13,7 @@ export interface MapPosition {
 export interface MapLocation {
   id: string;
   label: string;
+  type: LocationType;
   position: MapPosition;
   callout?: string;
 }

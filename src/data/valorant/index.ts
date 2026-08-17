@@ -45,4 +45,4 @@ export function getOppositeLocation(lineup: Lineup, selectedLocationId: string):
   return map.locations.find((location) => location.id === oppositeId);
 }
 
-export type { Lineup, LineupFilters, MapId, MapLocation, MapPosition, TeamSide, Utility, ValorantMap } from './types';
+export type { Lineup, LineupFilters, LocationType, MapId, MapLocation, MapPosition, TeamSide, Utility, ValorantMap } from './types';
