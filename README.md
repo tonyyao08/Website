@@ -39,7 +39,11 @@ You can also use the older prompt-driven helper with `npm run add:lineup`, but t
 | `npm run build` | Check and create the production site in `dist/`. |
 | `npm run preview` | Preview the production build locally. |
 | `npm run lineup:editor` | Run the local visual Valorant lineup editor at `http://127.0.0.1:4322/`. |
+| `npm run open:lineup-editor` | Start the visual editor if needed, then open it in your browser. |
+| `npm run open:preview` | Start the local website preview if needed, then open the Valorant lineup page. |
 | `npm run add:lineup` | Run the prompt-driven Valorant lineup helper. |
+
+For double-click shortcuts in File Explorer, run `OpenEditor.cmd` or `OpenPreview.cmd` in the project folder.
 
 ## Publishing
 

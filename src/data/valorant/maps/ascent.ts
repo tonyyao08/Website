@@ -53,7 +53,7 @@ const ascent: ValorantMap = {
     },
     {
       id: 'a-lobby-3',
-      label: "A lobby 2",
+      label: "A lobby",
       type: 'start',
       position: { x: 71.3735, y: 58.5086 },
     },
@@ -68,6 +68,80 @@ const ascent: ValorantMap = {
       label: "cypher b site",
       type: 'end',
       position: { x: 35.9568, y: 35.5919 },
+    },
+    {
+      id: 'a-site-left',
+      label: "a-site-left",
+      type: 'end',
+      position: { x: 82.3688, y: 41.8419 },
+    },
+    {
+      id: 'a-heaven',
+      label: "A heaven",
+      type: 'start',
+      position: { x: 84.2207, y: 26.1011 },
+    },
+    {
+      id: 'a-main-1',
+      label: "A main",
+      type: 'end',
+      position: { x: 69.9846, y: 64.0641 },
+    },
+    {
+      id: 'a-window',
+      label: "a-window",
+      type: 'start',
+      position: { x: 70.4475, y: 27.0142 },
+    },
+    {
+      id: 'market',
+      label: "Market",
+      position: { x: 42.4383, y: 32.454 },
+    },
+    {
+      id: 'b-site-logs',
+      label: "B site logs",
+      position: { x: 37.8086, y: 31.2966 },
+    },
+    {
+      id: 'b-lane',
+      label: "b lane",
+      position: { x: 22.6466, y: 33.7272 },
+    },
+    {
+      id: 'b-lobby-2',
+      label: "b lobby 2",
+      position: { x: 31.2114, y: 61.8522 },
+    },
+    {
+      id: 'b-stairs-2',
+      label: "b stairs 2",
+      position: { x: 28.5494, y: 21.3558 },
+    },
+    {
+      id: 'b-lobby-3',
+      label: "b lobby 3",
+      position: { x: 22.2994, y: 61.5178 },
+    },
+    {
+      id: 'tiles',
+      label: "tiles",
+      position: { x: 38.5031, y: 49.111 },
+    },
+    {
+      id: 'mid-market',
+      label: "mid market",
+      position: { x: 50.7716, y: 35.2222 },
+    },
+    {
+      id: 'b-spawn',
+      label: "B spawn",
+      position: { x: 32.4846, y: 15.0833 },
+    },
+    {
+      id: 'a-site',
+      label: "A site",
+      position: { x: 91.3966, y: 33.8333 },
     },
   ],
 };

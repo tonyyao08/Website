@@ -20,8 +20,7 @@ const ascentExample: Lineup = {
   },
   mechanics: {
     bounces: 1,
-    charge: 'custom',
-    customChargeNote: '3 charge',
+    charge: 3,
     movement: 'standing',
   },
   notes: ['Align in the middle of the line in the island image.'],

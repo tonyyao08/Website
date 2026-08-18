@@ -96,8 +96,8 @@ try {
   const result = await ask('Result');
   const notes = await ask('Notes (optional)');
   const bounces = Number(await ask('Number of bounces', '0'));
-  const chargeNote = await ask('Charge description', '3 charge');
-  if (!stand || !aim || !result || !Number.isInteger(bounces) || bounces < 0) throw new Error('Stand, aim, result, and a non-negative whole bounce count are required.');
+  const charge = Number(await ask('Charge (0 to 3)', '3'));
+  if (!stand || !aim || !result || !Number.isInteger(bounces) || bounces < 0 || !Number.isInteger(charge) || charge < 0 || charge > 3) throw new Error('Stand, aim, result, and valid bounce and charge counts are required.');
 
   const standSource = await ask('Stand image file path (optional)');
   const aimSource = await ask('Aim image file path (optional)');
@@ -110,7 +110,7 @@ try {
 
   await addLocations(mapFile, [start.addition, end.addition].filter(Boolean));
   const mediaLines = [standImage && `    standImage: '${standImage}',`, aimImage && `    aimImage: '${aimImage}',`, resultImage && `    resultImage: '${resultImage}',`].filter(Boolean);
-  const lineupSource = `import type { Lineup } from '../types';\n\nconst lineup: Lineup = {\n  id: '${id}',\n  title: ${JSON.stringify(title)},\n  mapId: '${mapId}',\n  side: '${side}',\n  utility: '${utility}',\n  startLocationId: '${start.id}',\n  endLocationId: '${end.id}',\n  stand: { description: ${JSON.stringify(stand)} },\n  aim: { description: ${JSON.stringify(aim)} },\n  mechanics: { bounces: ${bounces}, charge: 'custom', customChargeNote: ${JSON.stringify(chargeNote)} },\n  notes: ${JSON.stringify(notes ? [notes] : [])},\n  result: ${JSON.stringify(result)},${mediaLines.length ? `\n  media: {\n${mediaLines.join('\n')}\n  },` : ''}\n  verified: false,\n};\n\nexport default lineup;\n`;
+  const lineupSource = `import type { Lineup } from '../types';\n\nconst lineup: Lineup = {\n  id: '${id}',\n  title: ${JSON.stringify(title)},\n  mapId: '${mapId}',\n  side: '${side}',\n  utility: '${utility}',\n  startLocationId: '${start.id}',\n  endLocationId: '${end.id}',\n  stand: { description: ${JSON.stringify(stand)} },\n  aim: { description: ${JSON.stringify(aim)} },\n  mechanics: { bounces: ${bounces}, charge: ${charge} },\n  notes: ${JSON.stringify(notes ? [notes] : [])},\n  result: ${JSON.stringify(result)},${mediaLines.length ? `\n  media: {\n${mediaLines.join('\n')}\n  },` : ''}\n  verified: false,\n};\n\nexport default lineup;\n`;
   await writeFile(resolve(lineupsDirectory, `${id}.ts`), lineupSource);
   console.log(`\nCreated ${id}.ts and copied images to public/images/valorant/${mapId}/lineups/${id}/.`);
   console.log('Review the generated files, test the lineup in-game, then set verified: true and commit your changes.');

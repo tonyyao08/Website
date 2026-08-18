@@ -13,7 +13,8 @@ export interface MapPosition {
 export interface MapLocation {
   id: string;
   label: string;
-  type: LocationType;
+  /** Legacy display hint. Start/end status is derived from the lineups that reference this location. */
+  type?: LocationType;
   position: MapPosition;
   callout?: string;
 }
@@ -28,7 +29,9 @@ export interface ValorantMap {
 
 export interface LineupMedia {
   standImage?: string;
+  /** Legacy single aim image. New lineups use aimImages instead. */
   aimImage?: string;
+  aimImages?: string[];
   resultImage?: string;
   videoUrl?: string;
 }
@@ -53,8 +56,8 @@ export interface Lineup {
   };
   mechanics: {
     bounces: number;
-    charge: 'full' | 'half' | 'tap' | 'custom';
-    customChargeNote?: string;
+    /** Sova charge level, from 0 to 3. */
+    charge: number;
     movement?: 'standing' | 'walk' | 'run' | 'jump';
   };
   notes: string[];

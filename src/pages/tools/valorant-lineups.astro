@@ -17,6 +17,7 @@ const serializedLineups = lineups.map((lineup) => ({
   media: lineup.media && {
     standImage: mediaUrl(lineup.media.standImage),
     aimImage: mediaUrl(lineup.media.aimImage),
+    aimImages: lineup.media.aimImages?.map(mediaUrl),
     resultImage: mediaUrl(lineup.media.resultImage),
     videoUrl: lineup.media.videoUrl,
   },
@@ -81,20 +82,33 @@ const serializedLineups = lineups.map((lineup) => ({
   );
 
   const locationById = (id) => map.locations.find((location) => location.id === id);
+  const routeKey = (lineup) => `${lineup.startLocationId}::${lineup.endLocationId}`;
+  const routeLineups = (lineup) => filteredLineups().filter((candidate) => routeKey(candidate) === routeKey(lineup));
+  const locationRole = (location) => {
+    const starts = lineups.some((lineup) => lineup.startLocationId === location.id);
+    const ends = lineups.some((lineup) => lineup.endLocationId === location.id);
+    return starts && ends ? 'both' : starts ? 'start' : 'end';
+  };
 
   function showDetails(lineup) {
     const thumbnail = (source, caption) => source
       ? `<button class="image-thumbnail" type="button" data-image-src="${source}" data-image-caption="${caption}"><img src="${source}" alt="${caption}" /></button>`
       : '';
-    const mechanics = `<div class="mechanics-icons" aria-label="${lineup.mechanics.bounces} bounce, ${lineup.mechanics.customChargeNote ?? lineup.mechanics.charge} charge">
-      <span class="mechanic"><span class="mechanics-label">Bounce</span><span class="token-row"><i class="token diamond filled"></i><i class="token diamond"></i></span></span>
-      <span class="mechanic"><span class="mechanics-label">Charge</span><span class="token-row"><i class="token square filled"></i><i class="token square filled"></i><i class="token square"></i></span></span>
+    const tokens = (value, total, shape) => Array.from({ length: total }, (_, index) => `<i class="token ${shape}${index < value ? ' filled' : ''}"></i>`).join('');
+    const mechanics = `<div class="mechanics-icons" aria-label="${lineup.mechanics.bounces} bounce, ${lineup.mechanics.charge} charge">
+      <span class="mechanic"><span class="mechanics-label">Bounce</span><span class="token-row">${tokens(lineup.mechanics.bounces, Math.max(2, lineup.mechanics.bounces), 'diamond')}</span></span>
+      <span class="mechanic"><span class="mechanics-label">Charge</span><span class="token-row">${tokens(lineup.mechanics.charge, 3, 'square')}</span></span>
     </div>`;
+    const alternatives = routeLineups(lineup);
+    const aimImages = lineup.media?.aimImages?.length ? lineup.media.aimImages : lineup.media?.aimImage ? [lineup.media.aimImage] : [];
+    const aimThumbnails = aimImages.map((source, index) => thumbnail(source, aimImages.length > 1 ? `Where to aim (${index + 1})` : 'Where to aim')).join('');
+    const switcher = alternatives.length > 1 ? `<nav class="lineup-switcher" aria-label="Lineups for this route"><span>Lineup</span>${alternatives.map((candidate, index) => `<button type="button" class="lineup-switch-button${candidate.id === lineup.id ? ' active' : ''}" data-lineup-id="${candidate.id}" aria-label="View lineup ${index + 1}" aria-pressed="${candidate.id === lineup.id}">${index + 1}</button>`).join('')}</nav>` : '';
     details.innerHTML = `
       <h2>${lineup.title}</h2>
+      ${switcher}
       <dl>
         <div><dt>Stand</dt><dd><span>${lineup.stand.description}</span>${thumbnail(lineup.media?.standImage, 'Where to stand')}</dd></div>
-        <div><dt>Aim</dt><dd><span>${lineup.aim.description}</span>${thumbnail(lineup.media?.aimImage, 'Where to aim')}</dd></div>
+        <div><dt>Aim</dt><dd><span>${lineup.aim.description}</span>${aimThumbnails}</dd></div>
         <div class="mechanics-row"><dd>${mechanics}</dd></div>
         <div><dt>Result</dt><dd><span>${lineup.result}</span>${thumbnail(lineup.media?.resultImage, 'Result')}</dd></div>
       </dl>
@@ -120,12 +134,13 @@ const serializedLineups = lineups.map((lineup) => ({
 
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `map-location ${location.type}${selectedLocationId === location.id ? ' selected' : ''}`;
+      const role = locationRole(location);
+      button.className = `map-location ${role}${selectedLocationId === location.id ? ' selected' : ''}`;
       button.style.left = `${location.position.x}%`;
       button.style.top = `${location.position.y}%`;
       button.textContent = '';
-      button.title = `${location.label} (${location.type} position)`;
-      button.setAttribute('aria-label', `${location.label} ${location.type} position`);
+      button.title = `${location.label} (${role === 'both' ? 'start and end' : role} position)`;
+      button.setAttribute('aria-label', `${location.label} ${role === 'both' ? 'start and end' : role} position`);
       button.setAttribute('aria-pressed', String(selectedLocationId === location.id));
       button.addEventListener('click', () => {
         selectedLocationId = location.id;
@@ -137,9 +152,15 @@ const serializedLineups = lineups.map((lineup) => ({
 
     if (!selectedLocationId) return;
 
-    available
-      .filter((lineup) => lineup.startLocationId === selectedLocationId || lineup.endLocationId === selectedLocationId)
-      .forEach((lineup) => {
+    const connected = available.filter((lineup) => lineup.startLocationId === selectedLocationId || lineup.endLocationId === selectedLocationId);
+    const routeGroups = new Map();
+    connected.forEach((lineup) => {
+      const key = routeKey(lineup);
+      routeGroups.set(key, [...(routeGroups.get(key) ?? []), lineup]);
+    });
+
+    routeGroups.forEach((group) => {
+        const lineup = group[0];
         const start = locationById(lineup.startLocationId);
         const end = locationById(lineup.endLocationId);
         if (!start || !end) return;
@@ -155,7 +176,7 @@ const serializedLineups = lineups.map((lineup) => ({
         hitArea.classList.add('lineup-path-hit');
         hitArea.setAttribute('tabindex', '0');
         hitArea.setAttribute('role', 'button');
-        hitArea.setAttribute('aria-label', `Open ${lineup.title}`);
+        hitArea.setAttribute('aria-label', group.length > 1 ? `Open ${group.length} lineups for this route` : `Open ${lineup.title}`);
         visibleLine.classList.add('lineup-path');
         const open = () => showDetails(lineup);
         hitArea.addEventListener('click', open);
@@ -197,6 +218,12 @@ const serializedLineups = lineups.map((lineup) => ({
   });
 
   details.addEventListener('click', (event) => {
+    const switchButton = event.target.closest('.lineup-switch-button');
+    if (switchButton) {
+      const lineup = filteredLineups().find((candidate) => candidate.id === switchButton.dataset.lineupId);
+      if (lineup) showDetails(lineup);
+      return;
+    }
     const thumbnail = event.target.closest('.image-thumbnail');
     if (!thumbnail) return;
     previewImage.src = thumbnail.dataset.imageSrc;
@@ -232,12 +259,16 @@ const serializedLineups = lineups.map((lineup) => ({
   :global(.map-location) { position: absolute; width: 0.9rem; height: 0.9rem; transform: translate(-50%, -50%); border-radius: 50%; padding: 0; cursor: pointer; pointer-events: auto; }
   :global(.map-location.start) { border: 1px solid #facc15; background: #facc15; }
   :global(.map-location.end) { border: 1px solid #60a5fa; background: #60a5fa; }
+  :global(.map-location.both) { border: 1px solid #e5edf7; background: linear-gradient(90deg, #facc15 0 50%, #60a5fa 50% 100%); }
   :global(.map-location.selected) { box-shadow: 0 0 0 0.2rem #fff, 0 0 0.45rem 0.25rem #60a5fa; }
   .lineup-details { min-height: 18rem; padding: 1.5rem; background: #162235; border-left: 4px solid #42a5f5; }
   :global(#lineup-details h2) { margin-top: 0; }
+  :global(#lineup-details .lineup-switcher) { display: flex; align-items: center; gap: 0.35rem; margin: -0.5rem 0 1rem; color: #c8d5e6; font-weight: 700; }
+  :global(#lineup-details .lineup-switch-button) { min-width: 1.8rem; height: 1.8rem; padding: 0.1rem 0.4rem; border: 1px solid #43546d; border-radius: 0.35rem; background: #0b1220; color: #e5edf7; font: inherit; font-weight: 700; cursor: pointer; }
+  :global(#lineup-details .lineup-switch-button.active) { border-color: #42a5f5; background: #0f4c81; color: #fff; }
   :global(#lineup-details dl div) { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1rem; margin: 0.8rem 0; }
   :global(#lineup-details dt) { font-weight: 700; }
-  :global(#lineup-details dd) { display: flex; align-items: center; gap: 0.75rem; min-width: 0; margin: 0; }
+  :global(#lineup-details dd) { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; min-width: 0; margin: 0; }
   :global(#lineup-details .mechanics-row) { display: block; margin: 1rem 0; }
   :global(.mechanics-icons) { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; }
   :global(.mechanic) { display: inline-flex; align-items: center; gap: 0.55rem; }

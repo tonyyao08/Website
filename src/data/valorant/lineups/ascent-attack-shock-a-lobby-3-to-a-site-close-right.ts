@@ -10,7 +10,7 @@ const lineup: Lineup = {
   endLocationId: 'a-site-close-right',
   stand: { description: "" },
   aim: { description: "" },
-  mechanics: { bounces: 2, charge: 'custom', customChargeNote: "2 charge" },
+  mechanics: { bounces: 2, charge: 2 },
   notes: ["Anti cypher"],
   result: "lands on the right",
   media: {

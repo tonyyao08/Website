@@ -10,7 +10,7 @@ const editorHtml = await readFile(resolve(root, 'scripts/lineup-editor.html'));
 const slugify = (value) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 function locationsFrom(source) {
-  return [...source.matchAll(/\{\s*id:\s*['\"]([^'\"]+)['\"],\s*label:\s*['\"]([^'\"]+)['\"],\s*type:\s*['\"](start|end)['\"],\s*(?:\/\/[^\n]*\n\s*)?position:\s*\{ x: ([\d.]+), y: ([\d.]+) \}/g)]
+  return [...source.matchAll(/\{\s*id:\s*['\"]([^'\"]+)['\"],\s*label:\s*['\"]([^'\"]+)['\"],\s*(?:type:\s*['\"](start|end)['\"],\s*)?(?:\/\/[^\n]*\n\s*)?position:\s*\{ x: ([\d.]+), y: ([\d.]+) \}/g)]
     .map(([, id, label, type, x, y]) => ({ id, label, type, position: { x: Number(x), y: Number(y) } }));
 }
 
@@ -36,14 +36,16 @@ async function uniqueId(base) {
 }
 
 const value = (source, key) => source.match(new RegExp(`${key}:\\s*['\"]([^'\"]*)['\"]`))?.[1] ?? '';
+const arrayValues = (source, key) => [...(source.match(new RegExp(`${key}:\\s*\\[([\\s\\S]*?)\\]`))?.[1] ?? '').matchAll(/['\"]([^'\"]+)['\"]/g)].map(([, item]) => item);
 function parseLineup(source, file) {
+  const aimImages = arrayValues(source, 'aimImages');
   const object = {
     id: value(source, 'id'), title: value(source, 'title'), mapId: value(source, 'mapId'), side: value(source, 'side'), utility: value(source, 'utility'),
     startLocationId: value(source, 'startLocationId'), endLocationId: value(source, 'endLocationId'), file,
     stand: source.match(/stand:\s*\{\s*description:\s*['\"]([^'\"]*)['\"]/s)?.[1] ?? '',
     aim: source.match(/aim:\s*\{\s*description:\s*['\"]([^'\"]*)['\"]/s)?.[1] ?? '',
-    result: value(source, 'result'), notes: source.match(/notes:\s*\[\s*['\"]([^'\"]*)/s)?.[1] ?? '', bounces: Number(source.match(/bounces:\s*(\d+)/)?.[1] ?? 0), charge: value(source, 'customChargeNote') || '3 charge',
-    media: { standImage: value(source, 'standImage'), aimImage: value(source, 'aimImage'), resultImage: value(source, 'resultImage') },
+    result: value(source, 'result'), notes: source.match(/notes:\s*\[\s*['\"]([^'\"]*)/s)?.[1] ?? '', bounces: Number(source.match(/bounces:\s*(\d+)/)?.[1] ?? 0), charge: Number(source.match(/charge:\s*(\d+)/)?.[1] ?? value(source, 'customChargeNote').match(/\d+/)?.[0] ?? 3),
+    verified: /verified:\s*true/.test(source), media: { standImage: value(source, 'standImage'), aimImage: value(source, 'aimImage'), aimImages, resultImage: value(source, 'resultImage') },
   };
   return object.id && object.mapId ? object : null;
 }
@@ -55,7 +57,7 @@ async function existingLineups(mapId) {
 
 function addNewLocations(source, locations) {
   if (!locations.length) return source;
-  const records = locations.map((location) => `    {\n      id: '${location.id}',\n      label: ${JSON.stringify(location.label)},\n      type: '${location.type}',\n      position: { x: ${location.position.x}, y: ${location.position.y} },\n    },`).join('\n');
+  const records = locations.map((location) => `    {\n      id: '${location.id}',\n      label: ${JSON.stringify(location.label)},\n      position: { x: ${location.position.x}, y: ${location.position.y} },\n    },`).join('\n');
   const updated = source.replace(/\r?\n  \],\r?\n};/, `\n${records}\n  ],\n};`);
   if (updated === source) throw new Error('Could not insert the new map location.');
   return updated;
@@ -70,11 +72,11 @@ async function saveImage(image, mapId, folder, name) {
 }
 
 async function saveLineup(payload) {
-  const { mapId = 'ascent', title, side, utility, stand, aim, result, notes = '', bounces = 0, charge = '3 charge', start, end, images = {}, existingId = '', existingMedia = {} } = payload;
+  const { mapId = 'ascent', title, side, utility, stand, aim, result, notes = '', bounces = 0, charge = 3, start, end, images = {}, existingId = '', existingMedia = {}, verified = false } = payload;
   const safeMapId = mapIdFrom(mapId);
   const mapFile = mapFileFor(safeMapId);
   if (!title || !['attack', 'defense', 'all'].includes(side) || !['recon-dart', 'shock-dart'].includes(utility)) throw new Error('Complete the title, side, and utility fields.');
-  if (!start?.id || !end?.id || !Number.isInteger(Number(bounces)) || Number(bounces) < 0) throw new Error('Choose both locations and a valid bounce count.');
+  if (!start?.id || !end?.id || !Number.isInteger(Number(bounces)) || Number(bounces) < 0 || !Number.isInteger(Number(charge)) || Number(charge) < 0 || Number(charge) > 3) throw new Error('Choose both locations and valid bounce and charge counts.');
   const currentSource = await readFile(mapFile, 'utf8');
   const existing = locationsFrom(currentSource);
   const additions = [start, end].filter((location) => !existing.some((item) => item.id === location.id));
@@ -86,10 +88,14 @@ async function saveLineup(payload) {
   const folder = id;
   await mkdir(resolve(root, `public/images/valorant/${safeMapId}/lineups`, folder), { recursive: true });
   const standImage = await saveImage(images.stand, safeMapId, folder, 'stand') || existingMedia.standImage;
-  const aimImage = await saveImage(images.aim, safeMapId, folder, 'aim') || existingMedia.aimImage;
+  const existingAimImages = existingMedia.aimImages?.length ? existingMedia.aimImages : existingMedia.aimImage ? [existingMedia.aimImage] : [];
+  const aimImages = [
+    await saveImage(images.aim1, safeMapId, folder, 'aim-1') || existingAimImages[0],
+    await saveImage(images.aim2, safeMapId, folder, 'aim-2') || existingAimImages[1],
+  ].filter(Boolean);
   const resultImage = await saveImage(images.result, safeMapId, folder, 'result') || existingMedia.resultImage;
-  const media = [standImage && `    standImage: '${standImage}',`, aimImage && `    aimImage: '${aimImage}',`, resultImage && `    resultImage: '${resultImage}',`].filter(Boolean);
-  const source = `import type { Lineup } from '../types';\n\nconst lineup: Lineup = {\n  id: '${id}',\n  title: ${JSON.stringify(title)},\n  mapId: 'ascent',\n  side: '${side}',\n  utility: '${utility}',\n  startLocationId: '${start.id}',\n  endLocationId: '${end.id}',\n  stand: { description: ${JSON.stringify(stand)} },\n  aim: { description: ${JSON.stringify(aim)} },\n  mechanics: { bounces: ${Number(bounces)}, charge: 'custom', customChargeNote: ${JSON.stringify(charge)} },\n  notes: ${JSON.stringify(notes ? [notes] : [])},\n  result: ${JSON.stringify(result)},${media.length ? `\n  media: {\n${media.join('\n')}\n  },` : ''}\n  verified: false,\n};\n\nexport default lineup;\n`;
+  const media = [standImage && `    standImage: '${standImage}',`, aimImages.length && `    aimImages: ${JSON.stringify(aimImages)},`, resultImage && `    resultImage: '${resultImage}',`].filter(Boolean);
+  const source = `import type { Lineup } from '../types';\n\nconst lineup: Lineup = {\n  id: '${id}',\n  title: ${JSON.stringify(title)},\n  mapId: 'ascent',\n  side: '${side}',\n  utility: '${utility}',\n  startLocationId: '${start.id}',\n  endLocationId: '${end.id}',\n  stand: { description: ${JSON.stringify(stand)} },\n  aim: { description: ${JSON.stringify(aim)} },\n  mechanics: { bounces: ${Number(bounces)}, charge: ${Number(charge)} },\n  notes: ${JSON.stringify(notes ? [notes] : [])},\n  result: ${JSON.stringify(result)},${media.length ? `\n  media: {\n${media.join('\n')}\n  },` : ''}\n  verified: ${Boolean(verified)},\n};\n\nexport default lineup;\n`;
   const finalSource = source.replace("mapId: 'ascent'", `mapId: '${safeMapId}'`);
   await writeFile(mapFile, addNewLocations(currentSource, additions));
   await writeFile(resolve(lineupsDirectory, `${id}.ts`), finalSource);
@@ -100,7 +106,7 @@ function reply(response, status, body, type = 'text/plain') { response.writeHead
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://127.0.0.1:4322');
-    if (request.method === 'GET' && url.pathname === '/') return reply(response, 200, editorHtml, 'text/html');
+    if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/test')) return reply(response, 200, editorHtml, 'text/html');
     if (request.method === 'GET' && url.pathname === '/api/maps') return reply(response, 200, JSON.stringify(await availableMaps()), 'application/json');
     if (request.method === 'GET' && url.pathname === '/api/map') return reply(response, 200, JSON.stringify(await mapData(url.searchParams.get('map') || 'ascent')), 'application/json');
     if (request.method === 'GET' && url.pathname === '/api/lineups') return reply(response, 200, JSON.stringify(await existingLineups(url.searchParams.get('map') || 'ascent')), 'application/json');

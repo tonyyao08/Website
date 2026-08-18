@@ -10,7 +10,7 @@ const lineup: Lineup = {
   endLocationId: 'b-stairs',
   stand: { description: "" },
   aim: { description: "" },
-  mechanics: { bounces: 1, charge: 'custom', customChargeNote: "3 charge" },
+  mechanics: { bounces: 1, charge: 3 },
   notes: [],
   result: "",
   media: {

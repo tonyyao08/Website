@@ -10,7 +10,9 @@
     "build": "npm run check && astro build",
     "preview": "astro preview",
     "add:lineup": "node scripts/add-valorant-lineup.mjs",
-    "lineup:editor": "node scripts/lineup-editor.mjs"
+    "lineup:editor": "node scripts/lineup-editor.mjs",
+    "open:lineup-editor": "powershell -ExecutionPolicy Bypass -File ./OpenEditor.ps1",
+    "open:preview": "powershell -ExecutionPolicy Bypass -File ./OpenPreview.ps1"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

@@ -10,7 +10,7 @@ const lineup: Lineup = {
   endLocationId: 'cypher-b-site',
   stand: { description: "" },
   aim: { description: "" },
-  mechanics: { bounces: 0, charge: 'custom', customChargeNote: "2 charge" },
+  mechanics: { bounces: 0, charge: 2 },
   notes: [],
   result: "",
   media: {
