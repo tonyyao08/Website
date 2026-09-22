@@ -64,8 +64,9 @@
   const button = document.querySelector<HTMLButtonElement>('#instrument');
   const instrument = document.querySelector<HTMLElement>('#instrument');
   const status = document.querySelector<HTMLElement>('#sound-status');
-  const preset = { pitch: 1.65, roughness: 55, beatingMix: 0.15, brightness: 0.5, sustain: 1.1, volume: 0.45 };
+  const preset = { pitch: 1.65, roughness: 55, beatingMix: 0.15, brightness: 0.5, sustain: 1.1, volume: 1.8 };
   let context: AudioContext | undefined;
+  let output: DynamicsCompressorNode | undefined;
   let activeStrike: GainNode | undefined;
 
   button?.addEventListener('click', async () => {
@@ -74,6 +75,25 @@
       context ??= new AudioContext();
       if (context.state === 'suspended') await context.resume();
       if (context.state !== 'running') throw new Error('Audio is unavailable');
+      if (!output) {
+        // Boost the ring while controlling peaks, including overlapping taps.
+        output = context.createDynamicsCompressor();
+        output.threshold.value = -9;
+        output.knee.value = 12;
+        output.ratio.value = 4;
+        output.attack.value = 0.003;
+        output.release.value = 0.15;
+        const peakControl = context.createWaveShaper();
+        const curve = new Float32Array(4097);
+        for (let i = 0; i < curve.length; i++) {
+          const input = (i / (curve.length - 1)) * 2 - 1;
+          curve[i] = 0.95 * Math.tanh(input / 0.95);
+        }
+        peakControl.curve = curve;
+        peakControl.oversample = '4x';
+        output.connect(peakControl);
+        peakControl.connect(context.destination);
+      }
       const now = context.currentTime;
 
       // Fade the previous strike to keep rapid taps from building up volume.
@@ -83,7 +103,7 @@
       }
       const strike = context.createGain();
       strike.gain.value = preset.volume;
-      strike.connect(context.destination);
+      strike.connect(output);
       activeStrike = strike;
 
       // Inharmonic sine partials recreate the bright, slowly decaying metal ring.
