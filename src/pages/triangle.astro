@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Triangle</title>
+  </head>
+  <body>
+  <main>
+    <button class="instrument" id="instrument" type="button" aria-label="Play the triangle">
+      <svg viewBox="0 0 480 360" role="img" aria-labelledby="triangle-title triangle-description">
+        <title id="triangle-title">A musical triangle and its beater</title>
+        <desc id="triangle-description">A silver percussion triangle hangs from a blue loop, with an opening at the lower right and a metal beater beside it.</desc>
+        <defs>
+          <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#8595aa" />
+            <stop offset="0.28" stop-color="#f3f8ff" />
+            <stop offset="0.5" stop-color="#91a4ba" />
+            <stop offset="0.72" stop-color="#e4edf6" />
+            <stop offset="1" stop-color="#71859d" />
+          </linearGradient>
+          <radialGradient id="glow">
+            <stop stop-color="#7cc4ff" stop-opacity="0.14" />
+            <stop offset="1" stop-color="#7cc4ff" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="240" cy="205" rx="220" ry="150" fill="url(#glow)" />
+        <ellipse cx="225" cy="324" rx="133" ry="10" fill="#050a13" opacity="0.45" />
+        <g class="triangle-body">
+          <path d="M 218,83 C 186,24 255,24 225,83" fill="none" stroke="#7cc4ff" stroke-width="5" />
+          <path d="M 333,266 L 232,88 Q 223,72 214,88 L 105,279 Q 99,291 114,291 L 313,291" fill="none" stroke="#050a13" stroke-width="15" stroke-linecap="round" transform="translate(0 4)" />
+          <path d="M 333,266 L 232,88 Q 223,72 214,88 L 105,279 Q 99,291 114,291 L 313,291" fill="none" stroke="url(#metal)" stroke-width="12" stroke-linejoin="round" stroke-linecap="round" />
+        </g>
+        <g class="beater">
+          <path d="M 309,224 L 412,302" stroke="url(#metal)" stroke-width="7" stroke-linecap="round" />
+          <path d="M 381,279 L 413,303" stroke="#7cc4ff" stroke-width="11" stroke-linecap="round" />
+        </g>
+      </svg>
+    </button>
+    <p class="sound-status" id="sound-status" role="status"></p>
+    <noscript><p>Enable JavaScript to play the triangle.</p></noscript>
+  </main>
+  </body>
+</html>
+
+<style>
+  :global(body) { margin: 0; background: #0b1220; color: #e5edf7; font-family: system-ui, sans-serif; }
+  main { min-height: 100svh; display: grid; place-content: center; justify-items: center; }
+  .instrument { display: block; width: min(30rem, 90vw); padding: 0; border: 0; background: transparent; cursor: pointer; border-radius: 1rem; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  svg { display: block; width: 100%; height: auto; }
+  .triangle-body { transform-origin: 223px 77px; }
+  .beater { transform-origin: 410px 300px; }
+  .ringing .triangle-body { animation: ring 0.65s ease-out; }
+  .ringing .beater { animation: strike 0.25s ease-out; }
+  button:focus-visible { outline: 3px solid #e5edf7; outline-offset: 5px; }
+  .sound-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  @keyframes ring { 0%, 100% { transform: rotate(0); } 15%, 45% { transform: rotate(2deg); } 30%, 60% { transform: rotate(-2deg); } 80% { transform: rotate(1deg); } }
+  @keyframes strike { 45% { transform: rotate(-13deg); } }
+  @media (prefers-reduced-motion: reduce) { .ringing .triangle-body, .ringing .beater { animation: none; } button { transition: none; transform: none; } }
+</style>
+
+<script>
+  const button = document.querySelector<HTMLButtonElement>('#instrument');
+  const instrument = document.querySelector<HTMLElement>('#instrument');
+  const status = document.querySelector<HTMLElement>('#sound-status');
+  let context: AudioContext | undefined;
+  let activeStrike: GainNode | undefined;
+
+  button?.addEventListener('click', async () => {
+    if (!instrument || !status) return;
+    try {
+      context ??= new AudioContext();
+      if (context.state === 'suspended') await context.resume();
+      if (context.state !== 'running') throw new Error('Audio is unavailable');
+      const now = context.currentTime;
+
+      // Fade the previous strike to keep rapid taps from building up volume.
+      if (activeStrike) {
+        activeStrike.gain.cancelScheduledValues(now);
+        activeStrike.gain.setTargetAtTime(0, now, 0.015);
+      }
+      const strike = context.createGain();
+      strike.gain.value = 0.55;
+      strike.connect(context.destination);
+      activeStrike = strike;
+
+      // Inharmonic sine partials recreate the bright, slowly decaying metal ring.
+      const partials = [
+        { frequency: 1760, amplitude: 0.24, decay: 3.8 },
+        { frequency: 2489, amplitude: 0.2, decay: 3.1 },
+        { frequency: 3725, amplitude: 0.16, decay: 2.5 },
+        { frequency: 4983, amplitude: 0.11, decay: 1.9 },
+        { frequency: 6820, amplitude: 0.07, decay: 1.2 },
+        { frequency: 9140, amplitude: 0.035, decay: 0.55 },
+      ];
+      let remaining = partials.length;
+      for (const { frequency, amplitude, decay } of partials) {
+        const oscillator = context.createOscillator();
+        const envelope = context.createGain();
+        oscillator.frequency.value = frequency;
+        envelope.gain.setValueAtTime(0, now);
+        envelope.gain.linearRampToValueAtTime(amplitude, now + 0.003);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+        oscillator.connect(envelope);
+        envelope.connect(strike);
+        oscillator.start(now);
+        oscillator.stop(now + decay + 0.05);
+        oscillator.onended = () => {
+          oscillator.disconnect();
+          envelope.disconnect();
+          if (--remaining === 0) {
+            strike.disconnect();
+            if (activeStrike === strike) activeStrike = undefined;
+          }
+        };
+      }
+
+      instrument.classList.remove('ringing');
+      void instrument.offsetWidth;
+      instrument.classList.add('ringing');
+      status.textContent = 'Ding! Take a bow. Or play an encore.';
+    } catch {
+      status.textContent = 'Sound could not start. Try pressing the button again.';
+    }
+  });
+</script>
