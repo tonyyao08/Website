@@ -64,6 +64,7 @@
   const button = document.querySelector<HTMLButtonElement>('#instrument');
   const instrument = document.querySelector<HTMLElement>('#instrument');
   const status = document.querySelector<HTMLElement>('#sound-status');
+  const preset = { pitch: 1.65, roughness: 55, beatingMix: 0.15, brightness: 0.5, sustain: 1.1, volume: 0.45 };
   let context: AudioContext | undefined;
   let activeStrike: GainNode | undefined;
 
@@ -81,7 +82,7 @@
         activeStrike.gain.setTargetAtTime(0, now, 0.015);
       }
       const strike = context.createGain();
-      strike.gain.value = 0.55;
+      strike.gain.value = preset.volume;
       strike.connect(context.destination);
       activeStrike = strike;
 
@@ -94,13 +95,27 @@
         { frequency: 6820, amplitude: 0.07, decay: 1.2 },
         { frequency: 9140, amplitude: 0.035, decay: 0.55 },
       ];
-      let remaining = partials.length;
-      for (const { frequency, amplitude, decay } of partials) {
+      // Close frequency pairs add beating and roughness without relying on loudness.
+      // A quieter companion tone reduces the beating depth in the default sound.
+      // Keep every partial below Nyquist, and normalize the total amplitude.
+      const voices = partials.flatMap((partial, index) => {
+        const frequency = partial.frequency * preset.pitch;
+        const amplitude = partial.amplitude * (1 + preset.brightness * index);
+        const decay = partial.decay * preset.sustain;
+        return [
+              { frequency, amplitude: amplitude * (1 - preset.beatingMix), decay },
+              { frequency: frequency + preset.roughness, amplitude: amplitude * preset.beatingMix, decay },
+            ];
+      }).filter((voice) => voice.frequency < context!.sampleRate * 0.45);
+      const totalAmplitude = voices.reduce((sum, voice) => sum + voice.amplitude, 0);
+      const normalization = Math.min(1, 0.815 / totalAmplitude);
+      let remaining = voices.length;
+      for (const { frequency, amplitude, decay } of voices) {
         const oscillator = context.createOscillator();
         const envelope = context.createGain();
         oscillator.frequency.value = frequency;
         envelope.gain.setValueAtTime(0, now);
-        envelope.gain.linearRampToValueAtTime(amplitude, now + 0.003);
+        envelope.gain.linearRampToValueAtTime(amplitude * normalization, now + 0.003);
         envelope.gain.exponentialRampToValueAtTime(0.0001, now + decay);
         oscillator.connect(envelope);
         envelope.connect(strike);
