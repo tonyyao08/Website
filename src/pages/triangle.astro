@@ -38,6 +38,12 @@
         </g>
       </svg>
     </button>
+    <button class="sun-toggle" id="sun-toggle" type="button" aria-label="Rise and shine voice" aria-pressed="false" title="Rise and shine voice">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" />
+      </svg>
+    </button>
     <p class="sound-status" id="sound-status" role="status"></p>
     <noscript><p>Enable JavaScript to play the triangle.</p></noscript>
   </main>
@@ -54,6 +60,9 @@
   .ringing .triangle-body { animation: ring 0.65s ease-out; }
   .ringing .beater { animation: strike 0.25s ease-out; }
   button:focus-visible { outline: 3px solid #e5edf7; outline-offset: 5px; }
+  .sun-toggle { width: 48px; height: 48px; padding: 11px; border: 1px solid #34445b; border-radius: 50%; color: #9caec4; background: transparent; cursor: pointer; }
+  .sun-toggle[aria-pressed="true"] { color: #ffda75; border-color: #ffda75; background: #332a15; }
+  .sun-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
   .sound-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   @keyframes ring { 0%, 100% { transform: rotate(0); } 15%, 45% { transform: rotate(2deg); } 30%, 60% { transform: rotate(-2deg); } 80% { transform: rotate(1deg); } }
   @keyframes strike { 45% { transform: rotate(-13deg); } }
@@ -64,6 +73,46 @@
   const button = document.querySelector<HTMLButtonElement>('#instrument');
   const instrument = document.querySelector<HTMLElement>('#instrument');
   const status = document.querySelector<HTMLElement>('#sound-status');
+  const sunToggle = document.querySelector<HTMLButtonElement>('#sun-toggle');
+  const supportsSpeech = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+  let voiceEnabled = false;
+  let activePhrase: SpeechSynthesisUtterance | undefined;
+
+  if (sunToggle && !supportsSpeech) {
+    sunToggle.disabled = true;
+    sunToggle.title = 'Voice is unavailable in this browser';
+    sunToggle.setAttribute('aria-label', sunToggle.title);
+  }
+  sunToggle?.addEventListener('click', () => {
+    voiceEnabled = !voiceEnabled;
+    sunToggle.setAttribute('aria-pressed', String(voiceEnabled));
+    // Turning the toggle off affects future taps; let the current phrase finish.
+  });
+
+  function speakRiseAndShine() {
+    if (!supportsSpeech || !voiceEnabled || activePhrase) return;
+    const phrase = new SpeechSynthesisUtterance('Rise and shine!');
+    phrase.lang = 'en-US';
+    phrase.rate = 0.95;
+    phrase.pitch = 1.1;
+    phrase.volume = 1;
+    const finish = () => {
+      if (activePhrase === phrase) activePhrase = undefined;
+    };
+    phrase.onend = finish;
+    phrase.onerror = () => {
+      finish();
+      if (status) status.textContent = 'Voice could not play. Try tapping the triangle again.';
+    };
+    // Lock before queuing, so even taps before speech starts cannot queue duplicates.
+    activePhrase = phrase;
+    try {
+      window.speechSynthesis.speak(phrase);
+    } catch {
+      finish();
+      if (status) status.textContent = 'Voice could not play. Try tapping the triangle again.';
+    }
+  }
   const preset = { pitch: 1.65, roughness: 55, beatingMix: 0.15, brightness: 0.5, sustain: 1.1, volume: 1.8 };
   let context: AudioContext | undefined;
   let output: DynamicsCompressorNode | undefined;
@@ -71,6 +120,7 @@
 
   button?.addEventListener('click', async () => {
     if (!instrument || !status) return;
+    speakRiseAndShine();
     try {
       context ??= new AudioContext();
       if (context.state === 'suspended') await context.resume();
